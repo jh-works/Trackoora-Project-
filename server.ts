@@ -406,13 +406,21 @@ app.patch('/api/orders/:id/status', authenticateToken, async (req: any, res) => 
 });
 
 app.post('/api/orders', authenticateToken, async (req: any, res) => {
-  const { conversationId, productName, price, paymentMethod, deliveryAddress } = req.body;
+  const { conversationId, products, totalPrice, paymentMethod, deliveryAddress, customerName, customerPhone, campaignLabel, adId } = req.body;
   
+  // Create product name summary from products array
+  const productName = products ? products.map((p: any) => p.name).join(', ') : req.body.productName || 'Unknown Product';
+  const price = totalPrice || req.body.price;
+
   try {
     const supabase = getSupabase();
     
     if (!supabase) {
       console.log('Supabase not configured, simulating order creation for demo mode');
+      // Simulated Meta CAPI Check for Demo
+      if (campaignLabel && campaignLabel !== 'Direct Page' && campaignLabel !== 'ম্যানুয়াল অর্ডার') {
+        console.log(`[META CAPI - Simulated]: Purchase triggered for Campaign: ${campaignLabel}`);
+      }
       return res.json({
         id: crypto.randomUUID(),
         seller_id: req.user.id,
@@ -526,7 +534,22 @@ app.post('/api/orders', authenticateToken, async (req: any, res) => {
       .eq('id', req.user.id);
 
     // 4. Fire Meta CAPI Event (simulated)
-    await fireCapiEvent(req.user.id, 'Purchase', { fb_user_id: convCheck.fb_customer_user_id_encrypted }, { value: price, currency: 'BDT' });
+    // Only fire if the order originated from a Meta Ad source
+    if (adId || (campaignLabel && campaignLabel !== 'Direct Page' && campaignLabel !== 'ম্যানুয়াল অর্ডার') || convCheck.fb_customer_user_id_encrypted) {
+      await fireCapiEvent(req.user.id, 'Purchase', { 
+        fb_user_id: convCheck.fb_customer_user_id_encrypted,
+        phone: customerPhone,
+        first_name: customerName ? customerName.split(' ')[0] : undefined,
+        last_name: customerName ? customerName.split(' ').slice(1).join(' ') : undefined
+      }, { 
+        value: price, 
+        currency: 'BDT',
+        content_name: productName
+      });
+      console.log(`[META CAPI]: Purchase event dispatched securely for order ${order.id}. Source: ${campaignLabel || adId}`);
+    } else {
+      console.log(`[META CAPI]: Skipped. Order ${order.id} is not from a Meta Ad source.`);
+    }
 
     // 5. Audit log entry
     await supabase

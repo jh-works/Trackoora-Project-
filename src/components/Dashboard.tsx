@@ -424,13 +424,33 @@ export default function Dashboard({
 
   const [isSyncingMeta, setIsSyncingMeta] = useState(false);
 
+  const [orders, setOrders] = useState(MOCK_ORDERS);
+
   const filteredAds = useMemo(() => {
-    return MOCK_ADS.filter(
+    // True Attribution Mapping
+    const realAdData = MOCK_ADS.map(ad => {
+      // Find orders matching this campaign based on CAPI tracking
+      const matchingOrders = orders.filter(
+        o => o.campaign === ad.name || (o.adSource && o.adSource.includes(ad.id))
+      );
+      
+      const realPurchases = matchingOrders.length;
+      const realRevenue = matchingOrders.reduce((sum, o) => sum + (o.status !== "Cancelled" ? o.price : 0), 0);
+      
+      return {
+        ...ad,
+        confirmedOrders: realPurchases,
+        revenue: realRevenue,
+        dynamicRoas: ad.spend > 0 ? (realRevenue / ad.spend).toFixed(2) : "0.00"
+      };
+    });
+
+    return realAdData.filter(
       (c) =>
         c.name.toLowerCase().includes(adSearch.toLowerCase()) ||
         c.id.toLowerCase().includes(adSearch.toLowerCase()),
     );
-  }, [adSearch]);
+  }, [adSearch, orders]);
 
   // Meta Sync Logic
   const handleMetaSync = useCallback(async () => {
@@ -451,8 +471,6 @@ export default function Dashboard({
     useState(false);
   const [editOrderAdvanceMethodPopupOpen, setEditOrderAdvanceMethodPopupOpen] =
     useState(false);
-
-  const [orders, setOrders] = useState(MOCK_ORDERS);
 
   const followUpMessages = {
     Reminder: t(
@@ -738,19 +756,27 @@ export default function Dashboard({
   const adStats = useMemo(() => {
     const totalSpend = MOCK_ADS.reduce((acc, ad) => acc + ad.spend, 0);
     const totalLeads = conversations.length;
-    const totalRevenue = orders.reduce(
+    // Map purchases only from CAPI identified orders
+    const adDrivenOrders = orders.filter(o => 
+      o.campaign && o.campaign !== "Direct Message" && o.adSource && !o.adSource.includes("Direct")
+    );
+    const totalPurchases = adDrivenOrders.length;
+    const totalRevenue = adDrivenOrders.reduce(
       (acc, o) => acc + (o.status !== "Cancelled" ? o.price : 0),
       0,
     );
 
     const cpl = totalLeads > 0 ? Math.round(totalSpend / totalLeads) : 0;
-    const roas = totalSpend > 0 ? (totalRevenue / totalSpend).toFixed(1) : "0";
+    const roas = totalSpend > 0 ? (totalRevenue / totalSpend).toFixed(2) : "0.00";
+    const cpp = totalPurchases > 0 ? Math.round(totalSpend / totalPurchases) : 0;
 
     return {
       spend: totalSpend.toLocaleString(),
       roas,
       leads: totalLeads,
       cpl: cpl.toLocaleString(),
+      purchases: totalPurchases,
+      cpp: cpp.toLocaleString()
     };
   }, [conversations, orders]);
 
@@ -1503,6 +1529,8 @@ export default function Dashboard({
           customerName,
           customerPhone,
           confirmationMsg: orderConfirmationMsg,
+          campaignLabel,
+          adId: showOrderPanel.ad_id || "",
         }),
       });
 
@@ -3834,10 +3862,11 @@ export default function Dashboard({
                 ))}
               </div>
 
-              <div className="bg-card border border-border rounded-xl overflow-x-auto">
-                <table className="w-full text-left border-collapse min-w-[800px]">
+              <div className="bg-card border border-border rounded-xl flex flex-col">
+                <div className="overflow-x-auto w-full">
+                  <table className="w-full text-left border-collapse min-w-[1000px]">
                   <thead>
-                    <tr className="bg-bg3 border-b border-border text-[10px] uppercase tracking-wider text-text3">
+                    <tr className="bg-bg3 border-b border-border text-[10px] uppercase tracking-wider text-text3 whitespace-nowrap">
                       <th className="p-3 font-bold">
                         {t("Order Date", "অর্ডার তারিখ")}
                       </th>
@@ -4015,127 +4044,154 @@ export default function Dashboard({
                     )}
                   </tbody>
                 </table>
+                </div>
                 {filteredOrders.length > 10 && (
-                  <div className="p-4 border-t border-border bg-bg3 text-center">
+                  <div className="p-4 border-t border-border bg-bg3 text-center w-full rounded-b-xl">
                     <button
                       onClick={() => setActiveTab("crm")}
-                      className="text-xs font-bold text-orange hover:underline flex items-center justify-center gap-1 mx-auto"
+                      className="px-6 py-2.5 bg-orange text-white rounded-xl text-xs font-bold shadow-lg shadow-orange/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto uppercase tracking-wider"
                     >
                       {t(
                         "View All Orders in Management",
                         "সব অর্ডার ম্যানেজমেন্টে দেখুন",
                       )}{" "}
-                      <ArrowRight className="w-3 h-3" />
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* bKash vs COD Split Report */}
-              <div className="grid md:grid-cols-2 gap-4 mt-6">
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-base font-bold">
-                      {t("Payment Method Split", "পেমেন্ট মেথড স্প্লিট")}
+              {/* Financial Dashboard - Modernized */}
+              <div className="grid md:grid-cols-2 gap-6 mt-6">
+                
+                {/* Modern Payment Split */}
+                <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-sm group hover:border-orange/20 transition-all">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                  
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-sm font-bold text-text2 uppercase tracking-wider">
+                      {t("Payment Split", "পেমেন্ট স্প্লিট")}
                     </h3>
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-bold">
-                        {t("bKash", "বিকাশ")}: ৳{toBanglaNumber("28,500")} (
-                        {toBanglaNumber(59)}%)
-                      </span>
-                      <div className="w-1/2 bg-bg3 rounded-full h-1.5">
-                        <div
-                          className="bg-pink-500 h-1.5 rounded-full"
-                          style={{ width: "59%" }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-text2">
-                        {t("Nagad", "নগদ")}: ৳{toBanglaNumber("7,200")} (
-                        {toBanglaNumber(15)}%)
-                      </span>
-                      <div className="w-1/2 bg-bg3 rounded-full h-1.5">
-                        <div
-                          className="bg-orange h-1.5 rounded-full"
-                          style={{ width: "15%" }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-text2">
-                        COD: ৳{toBanglaNumber("12,300")} ({toBanglaNumber(26)}%)
-                      </span>
-                      <div className="w-1/2 bg-bg3 rounded-full h-1.5">
-                        <div
-                          className="bg-blue-500 h-1.5 rounded-full"
-                          style={{ width: "26%" }}
-                        ></div>
-                      </div>
-                    </div>
-                    <div className="pt-3 mt-3 border-t border-border">
-                      <div className="bg-bg2 p-2 rounded-lg border border-border flex items-center justify-center gap-2 text-[10px] font-bold">
-                        <span className="text-green-500">
-                          {t("Paid upfront", "অগ্রিম প্রদান")}: ৳
-                          {toBanglaNumber("35,700")}
+                  
+                  <div className="space-y-4">
+                    {/* bKash */}
+                    <div>
+                      <div className="flex justify-between items-end mb-1.5">
+                        <span className="text-sm font-bold flex items-center gap-2">
+                           <div className="w-2 h-2 rounded-full bg-pink-500"></div>
+                           {t("bKash", "বিকাশ")}
                         </span>
-                        <div className="w-px h-3 bg-border"></div>
-                        <span className="text-orange">
-                          {t(
-                            "Awaiting COD collection",
-                            "COD কালেকশনের অপেক্ষায়",
-                          )}
-                          : ৳{toBanglaNumber("12,300")}
+                        <span className="text-xs font-mono text-text2">
+                          ৳{toBanglaNumber("28,500")} <span className="text-text3 opacity-70">({toBanglaNumber(59)}%)</span>
                         </span>
+                      </div>
+                      <div className="w-full bg-bg3 rounded-full h-2 overflow-hidden border border-border/50">
+                        <div className="bg-gradient-to-r from-pink-500 to-pink-400 h-full rounded-full transition-all duration-1000" style={{ width: "59%" }}></div>
+                      </div>
+                    </div>
+
+                    {/* Nagad */}
+                    <div>
+                      <div className="flex justify-between items-end mb-1.5">
+                        <span className="text-sm font-bold flex items-center gap-2">
+                           <div className="w-2 h-2 rounded-full bg-orange"></div>
+                           {t("Nagad", "নগদ")}
+                        </span>
+                        <span className="text-xs font-mono text-text2">
+                          ৳{toBanglaNumber("7,200")} <span className="text-text3 opacity-70">({toBanglaNumber(15)}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-bg3 rounded-full h-2 overflow-hidden border border-border/50">
+                        <div className="bg-gradient-to-r from-orange to-orange/80 h-full rounded-full transition-all duration-1000" style={{ width: "15%" }}></div>
+                      </div>
+                    </div>
+
+                    {/* COD */}
+                    <div>
+                      <div className="flex justify-between items-end mb-1.5">
+                        <span className="text-sm font-bold flex items-center gap-2">
+                           <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                           COD
+                        </span>
+                        <span className="text-xs font-mono text-text2">
+                          ৳{toBanglaNumber("12,300")} <span className="text-text3 opacity-70">({toBanglaNumber(26)}%)</span>
+                        </span>
+                      </div>
+                      <div className="w-full bg-bg3 rounded-full h-2 overflow-hidden border border-border/50">
+                        <div className="bg-gradient-to-r from-blue-500 to-blue-400 h-full rounded-full transition-all duration-1000" style={{ width: "26%" }}></div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="bg-card border border-border rounded-xl p-4">
-                  <h3 className="text-base font-bold mb-3">
-                    {t("Revenue Summary", "রেভিনিউ সামারি")}
-                  </h3>
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between items-center text-orange">
-                      <span className="text-xs font-bold">
-                        {t("Gross Revenue", "মোট রেভিনিউ")}: ৳
-                        {toBanglaNumber(orderStats.gross)}
-                      </span>
+
+                  {/* Summary Footer */}
+                  <div className="mt-6 p-3 bg-bg2 rounded-xl flex items-center justify-between border border-border">
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-text3 uppercase tracking-wider mb-0.5">{t("Pre-Paid", "অগ্রিম প্রদান")}</span>
+                      <span className="text-sm font-bold text-green-500">৳{toBanglaNumber("35,700")}</span>
                     </div>
-                    <div className="text-[10px] text-text3 italic mb-1">
-                      (
-                      {t(
-                        "before courier deductions",
-                        "কুরিয়ার চার্জ কাটার আগে",
-                      )}
-                      )
-                    </div>
-                    <div className="flex justify-between items-center text-red">
-                      <span className="text-xs">
-                        {t("Return Charges Lost", "রিটার্ন চার্জ লস")}: - ৳
-                        {toBanglaNumber(orderStats.returnLoss)}
-                      </span>
-                    </div>
-                    <div className="pt-3 mt-3 border-t border-border">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-bold text-cyan">
-                          {t("Est. Net Revenue", "আনুমানিক নিট রেভিনিউ")}: ৳
-                          {toBanglaNumber(orderStats.net)}
-                        </span>
-                      </div>
-                      <div className="text-[10px] text-text3 italic mt-0.5">
-                        (
-                        {t(
-                          "estimated — V2 will calculate exactly via courier API",
-                          "আনুমানিক — V2 কুরিয়ার API এর মাধ্যমে সঠিকভাবে হিসাব করবে",
-                        )}
-                        )
-                      </div>
+                    <div className="w-px h-8 bg-border"></div>
+                    <div className="flex flex-col text-right">
+                      <span className="text-[10px] text-text3 uppercase tracking-wider mb-0.5">{t("Awaiting COD", "COD অপেক্ষমান")}</span>
+                      <span className="text-sm font-bold text-orange">৳{toBanglaNumber("12,300")}</span>
                     </div>
                   </div>
                 </div>
+
+                {/* Modern Revenue Summary */}
+                <div className="bg-card border border-border rounded-2xl p-6 relative overflow-hidden backdrop-blur-sm group hover:border-cyan/20 transition-all">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-cyan/5 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+                  
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-sm font-bold text-text2 uppercase tracking-wider">
+                      {t("Revenue Summary", "রেভিনিউ সামারি")}
+                    </h3>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="bg-bg2 p-4 rounded-xl border border-border border-b-2 border-b-orange/30">
+                      <span className="block text-[10px] text-text3 uppercase tracking-wider mb-1">
+                         {t("Gross Revenue", "মোট রেভিনিউ")}
+                      </span>
+                      <span className="text-lg font-bold text-orange">
+                         ৳{toBanglaNumber(orderStats.gross)}
+                      </span>
+                      <span className="block text-[9px] text-text3 italic mt-1 leading-tight">
+                         ({t("before courier", "কুরিয়ার চার্জ আগে")})
+                      </span>
+                    </div>
+                    
+                    <div className="bg-bg2 p-4 rounded-xl border border-border border-b-2 border-b-red/30">
+                      <span className="block text-[10px] text-text3 uppercase tracking-wider mb-1">
+                         {t("Return Loss", "রিটার্ন লস")}
+                      </span>
+                      <span className="text-lg font-bold text-red">
+                         - ৳{toBanglaNumber(orderStats.returnLoss)}
+                      </span>
+                      <span className="block text-[9px] text-text3 italic mt-1 leading-tight">
+                         ({t("failed deliveries", "ফেইল্ড ডেলিভারি")})
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="bg-gradient-to-r from-bg2 to-bg3 p-5 rounded-xl border border-border flex items-center justify-between relative overflow-hidden">
+                     <div className="absolute inset-0 bg-cyan/5"></div>
+                     <div className="relative z-10">
+                        <span className="block text-xs font-bold text-cyan uppercase tracking-wider mb-1">
+                           {t("Est. Net Revenue", "আনুমানিক নিট রেভিনিউ")}
+                        </span>
+                        <span className="text-2xl font-black text-text font-mono tracking-tight">
+                           ৳{toBanglaNumber(orderStats.net)}
+                        </span>
+                     </div>
+                     <div className="relative z-10 text-right opacity-60 max-w-[100px]">
+                        <span className="text-[9px] leading-tight block">
+                           {t("V2 exact calculation coming soon", "V2 শীঘ্রই আসছে")}
+                        </span>
+                     </div>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
@@ -4240,7 +4296,7 @@ export default function Dashboard({
                     </p>
                   </div>
                   <p className="text-xl font-black text-orange">
-                    {toBanglaNumber(adStats.purchases || 83)}
+                    {toBanglaNumber(adStats.purchases)}
                   </p>
                   <p className="text-[9px] text-text3 font-medium mt-1">
                     {t("confirmed orders", "নিশ্চিত অর্ডার")}
@@ -4254,7 +4310,7 @@ export default function Dashboard({
                     </p>
                   </div>
                   <p className="text-xl font-black text-text">
-                    ৳{toBanglaNumber(150)}
+                    ৳{toBanglaNumber(adStats.cpp)}
                   </p>
                   <p className="text-[9px] text-text3 font-medium mt-1">
                     {t("avg. conversion cost", "গড় কনভারশন খরচ")}
@@ -4761,9 +4817,9 @@ export default function Dashboard({
                   </h3>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[900px]">
+                  <table className="w-full text-left border-collapse min-w-[1200px]">
                     <thead>
-                      <tr className="bg-bg2 border-b border-border text-[10px] uppercase tracking-wider text-text3">
+                      <tr className="bg-bg2 border-b border-border text-[10px] uppercase tracking-wider text-text3 whitespace-nowrap">
                         <th className="p-4 font-bold">
                           {t("Order Date", "অর্ডার তারিখ")}
                         </th>
@@ -4771,13 +4827,16 @@ export default function Dashboard({
                           {t("Order UID", "অর্ডার UID")}
                         </th>
                         <th className="p-4 font-bold">
-                          {t("Product", "প্রোডাক্ট")}
-                        </th>
-                        <th className="p-4 font-bold">
                           {t("Customer", "কাস্টমার")}
                         </th>
                         <th className="p-4 font-bold">
-                          {t("Payment & Price", "পেমেন্ট ও মূল্য")}
+                          {t("Product", "প্রোডাক্ট")}
+                        </th>
+                        <th className="p-4 font-bold">
+                          {t("Price (BDT)", "মূল্য (টাকা)")}
+                        </th>
+                        <th className="p-4 font-bold">
+                          {t("Payment", "পেমেন্ট")}
                         </th>
                         <th className="p-4 font-bold">
                           {t("Status", "স্ট্যাটাস")}
@@ -4786,7 +4845,7 @@ export default function Dashboard({
                           {t("Ad Source", "অ্যাড সোর্স")}
                         </th>
                         <th className="p-4 font-bold text-right">
-                          {t("Action", "অ্যাকশন")}
+                          {t("Actions", "অ্যাকশন")}
                         </th>
                       </tr>
                     </thead>
@@ -4851,35 +4910,35 @@ export default function Dashboard({
                               <td className="p-4 text-xs font-mono text-orange font-bold">
                                 {order.uid}
                               </td>
-                              <td className="p-4 text-xs text-text2 max-w-[150px] truncate" title={order.product}>
-                                {order.product}
-                              </td>
                               <td className="p-4">
                                 <div className="flex items-center gap-3">
                                   <div className="w-8 h-8 bg-orange/10 rounded-full flex items-center justify-center text-orange font-bold text-[10px]">
                                     {order.customer[0]}
                                   </div>
                                   <div>
-                                    <p className="text-xs font-bold">
+                                    <span className="text-xs font-bold block">
                                       {order.customer}
-                                    </p>
-                                    <p className="text-[10px] text-text3">
+                                    </span>
+                                    <span className="text-[10px] text-text3">
                                       {order.phone}
-                                    </p>
+                                    </span>
                                   </div>
                                 </div>
                               </td>
-                              <td className="p-4">
-                                <div className="flex flex-col">
-                                  <span className="text-xs font-bold text-orange">
-                                    ৳
-                                    {toBanglaNumber(
-                                      (order.price || 0).toLocaleString(),
-                                    )}
-                                  </span>
-                                  <span className="text-[10px] text-text3">
-                                    {order.payment}
-                                  </span>
+                              <td className="p-4 text-xs text-text2 max-w-[150px] truncate" title={order.product}>
+                                {order.product}
+                              </td>
+                              <td className="p-4 text-xs font-bold text-orange">
+                                ৳{toBanglaNumber((order.price || 0).toLocaleString())}
+                              </td>
+                              <td className="p-4 text-xs text-text2">
+                                <div className="flex items-center gap-2">
+                                  {order.payment}
+                                  {order.isSplit && (
+                                    <span className="bg-purple-500/10 text-purple-500 text-[8px] font-bold px-1.5 py-0.5 rounded uppercase border border-purple-500/20">
+                                      {t("Split", "স্প্লিট")}
+                                    </span>
+                                  )}
                                 </div>
                               </td>
                               <td className="p-4">
@@ -5013,10 +5072,10 @@ export default function Dashboard({
                       "billing",
                       "support",
                     ] as const
-                  ).map((tab) => (
+                  ).map((tab: string) => (
                     <button
                       key={tab}
-                      onClick={() => setSettingsTab(tab)}
+                      onClick={() => setSettingsTab(tab as any)}
                       className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all text-left flex whitespace-nowrap ${
                         settingsTab === tab
                           ? "bg-orange text-white shadow-md shadow-orange/20"
