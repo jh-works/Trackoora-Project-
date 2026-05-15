@@ -19,8 +19,12 @@ CREATE TABLE sellers (
     subscription_started_at TIMESTAMPTZ,
     subscription_renewal_date TIMESTAMPTZ,
     orders_this_month_count INTEGER DEFAULT 0,
-    orders_month_reset_date TIMESTAMPTZ DEFAULT (DATE_TRUNC('month', NOW()) + INTERVAL '1 month'),
+    orders_month_reset_date DATE DEFAULT (DATE_TRUNC('month', NOW()) + INTERVAL '1 month')::DATE,
     setup_complete BOOLEAN DEFAULT FALSE,
+    telegram_report_time TIME DEFAULT '09:00:00',
+    notification_sound BOOLEAN DEFAULT TRUE,
+    notification_browser BOOLEAN DEFAULT TRUE,
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -77,6 +81,19 @@ ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies (Example for sellers)
--- CREATE POLICY seller_isolation ON sellers USING (id = auth.uid());
--- Note: Specific policies will depend on Supabase Auth integration.
+-- RLS Policies - Sellers can only see their own data
+CREATE POLICY "sellers_own_data" ON sellers
+  FOR ALL USING (auth.uid() = id);
+
+CREATE POLICY "conversations_own_data" ON conversations
+  FOR ALL USING (auth.uid() = seller_id);
+
+CREATE POLICY "orders_own_data" ON orders
+  FOR ALL USING (auth.uid() = seller_id);
+
+-- Audit logs: sellers can read their own logs, cannot write directly
+CREATE POLICY "audit_logs_read_own" ON audit_logs
+  FOR SELECT USING (auth.uid() = seller_id);
+
+-- Service role (backend) bypasses RLS automatically in Supabase
+-- No additional policy needed for service role

@@ -15,6 +15,15 @@ import crypto from 'crypto';
 
 dotenv.config();
 
+if (process.env.NODE_ENV === 'production') {
+  const required = ['VITE_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'META_APP_SECRET', 'ENCRYPTION_KEY', 'JWT_SECRET'];
+  const missing = required.filter(k => !process.env[k]);
+  if (missing.length > 0) {
+    console.error('FATAL: Missing required environment variables:', missing.join(', '));
+    process.exit(1);
+  }
+}
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -48,7 +57,7 @@ function getSupabase() {
 
 // Middleware
 app.use(cors({
-  origin: true, // Allow all origins for dev/preview environments to avoid blocking the preview
+  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 app.use(cookieParser());
@@ -105,7 +114,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
   if (!supabase) {
     // If Supabase is not configured, fall back to simple JWT check for demo mode
     try {
-      const user = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+      const user = jwt.verify(token, process.env.JWT_SECRET || 'fallback_jwt_secret_change_in_production');
       req.user = user;
       return next();
     } catch (err) {
@@ -120,7 +129,7 @@ const authenticateToken = async (req: any, res: any, next: any) => {
     if (error || !user) {
       // If Supabase fails, try fallback JWT for backward compatibility or demo
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_jwt_secret_change_in_production');
         req.user = decoded;
         return next();
       } catch (err) {
@@ -174,7 +183,11 @@ app.get('/api/couriers', authenticateToken, (req, res) => {
 });
 
 // Encryption Helpers
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default_secret_key_32_chars_long_!!'; // Must be 32 bytes for aes-256-cbc
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || (process.env.NODE_ENV !== 'production' ? 'default_dev_encryption_key_32_chars_long!!' : undefined);
+if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length < 32) {
+  console.error('FATAL: ENCRYPTION_KEY env var is missing or too short. App cannot start.');
+  process.exit(1);
+}
 const IV_LENGTH = 16;
 
 function encrypt(text: string) {
@@ -456,7 +469,17 @@ app.post('/api/orders', authenticateToken, async (req: any, res) => {
       if (currentSeller.subscription_plan === 'pro') limit = Infinity;
       
       if (currentSeller.orders_this_month_count >= limit) {
-        return res.status(403).json({ error: 'আপনার এই মাসের order limit শেষ হয়েছে। Upgrade করুন।' });
+        return res.status(402).json({ 
+          error: 'ORDER_LIMIT_REACHED',
+          message: 'আপনার এই মাসের order limit শেষ হয়েছে। Upgrade করুন।'
+        });
+      }
+
+      const usagePercent = currentSeller.orders_this_month_count / limit;
+      // Attach warning flag to response when at 80%
+      if (usagePercent >= 0.80 && usagePercent < 1.0) {
+        res.setHeader('X-Order-Limit-Warning', 'true');
+        res.setHeader('X-Order-Limit-Usage', Math.round(usagePercent * 100).toString());
       }
     }
 

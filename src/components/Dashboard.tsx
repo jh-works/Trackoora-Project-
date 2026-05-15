@@ -270,9 +270,9 @@ export default function Dashboard({
     email: user?.email || "seller@example.com",
     phone: user?.user_metadata?.phone || "01712345678",
     avatar: user?.user_metadata?.avatar_url || user?.picture || null,
-    businessName: "Fashion Hub BD",
-    businessCategory: "fashion",
-    address: "Dhanmondi, Dhaka",
+    businessName: settings?.meta_page_name || "",
+    businessCategory: settings?.meta_page_category || "",
+    address: "",
     telegramId: settings?.telegram_chat_id || "",
     uid: user?.id 
           ? user.id.startsWith('demo-user') 
@@ -2232,10 +2232,12 @@ export default function Dashboard({
                           selectedId={selectedOrder.status}
                           onSelect={(id) => {
                             const updates: any = { status: id };
-                            if (id === "Delivered") {
-                              updates.deliveredDate = new Date()
-                                .toISOString()
-                                .split("T")[0];
+                            if (id === "Delivered" && !selectedOrder.deliveredDate) {
+                              updates.deliveredDate = new Date().toISOString().split("T")[0];
+                            } else if (id === "Returned" && !selectedOrder.returnedDate) {
+                              updates.returnedDate = new Date().toISOString().split("T")[0];
+                            } else if (id === "Cancelled" && !selectedOrder.cancelledDate) {
+                              updates.cancelledDate = new Date().toISOString().split("T")[0];
                             }
                             setSelectedOrder({ ...selectedOrder, ...updates });
                           }}
@@ -2243,21 +2245,22 @@ export default function Dashboard({
                           setIsOpen={setEditOrderStatusPopupOpen}
                         />
                       </div>
-                      {selectedOrder.status === "Delivered" && (
+                      {(selectedOrder.status === "Delivered" || selectedOrder.status === "Returned" || selectedOrder.status === "Cancelled") && (
                         <div className="col-span-2">
                           <label className="block text-[10px] font-bold text-text3 uppercase mb-1.5 ml-1">
-                            {t("Delivered Date", "ডেলিভারি তারিখ")}
+                            {selectedOrder.status === "Delivered" ? t("Delivered Date", "ডেলিভারি তারিখ") : selectedOrder.status === "Returned" ? t("Returned Date", "রিটার্ন তারিখ") : t("Cancelled Date", "বাতিল তারিখ")}
                           </label>
                           <input
                             type="date"
                             disabled={!isEditingOrder}
-                            value={selectedOrder.deliveredDate || ""}
-                            onChange={(e) =>
+                            value={selectedOrder.status === "Delivered" ? (selectedOrder.deliveredDate || "") : selectedOrder.status === "Returned" ? (selectedOrder.returnedDate || "") : (selectedOrder.cancelledDate || "")}
+                            onChange={(e) => {
+                              const key = selectedOrder.status === "Delivered" ? "deliveredDate" : selectedOrder.status === "Returned" ? "returnedDate" : "cancelledDate";
                               setSelectedOrder({
                                 ...selectedOrder,
-                                deliveredDate: e.target.value,
-                              })
-                            }
+                                [key]: e.target.value,
+                              });
+                            }}
                             className={`w-full bg-bg3 border border-border rounded-xl px-4 py-2.5 text-xs outline-none focus:border-orange ${!isEditingOrder ? "opacity-70 cursor-not-allowed" : ""}`}
                           />
                         </div>
@@ -2773,59 +2776,35 @@ export default function Dashboard({
         </AnimatePresence>
 
         {/* Dashboard Content */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-6 md:space-y-8">
-          {integrationSkipped && activeTab !== 'settings' && activeTab !== 'subscription' ? (
-             <div className="space-y-8 pb-20">
-               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                 <div className="space-y-1">
-                   <h1 className="text-2xl font-black tracking-tight text-text font-syne uppercase">
-                     {t("Hello,", "হ্যালো,")}{" "}{profileData.name.split(" ")[0]}! 👋
-                   </h1>
-                   <div className="flex items-center gap-2">
-                     <p className="text-xs text-text3 font-medium">
-                       {activeTab === 'overview' ? t("Overview", "ওভারভিউ") :
-                        activeTab === 'conversations' ? t("Conversations", "কনভারসেশনস") :
-                        activeTab === 'orders' ? t("Orders", "অর্ডারসমূহ") :
-                        activeTab === 'reports' ? t("Reports & Analytics", "রিপোর্টস এবং অ্যানালিটিক্স") :
-                        activeTab === 'crm' ? t("Customers & CRM", "কাস্টমারস এবং সিআরএম") :
-                        activeTab === 'notifications' ? t("Notifications", "নোটিফিকেশনস") :
-                        t("Features", "ফিচারসমূহ")}
-                     </p>
-                     <span className="w-1 h-1 bg-border rounded-full" />
-                     <p className="text-[10px] text-text3 font-black uppercase tracking-widest bg-bg3 px-2 py-0.5 rounded">
-                       {settings?.meta_connected === false ? t("Unconnected", "আনকানেক্টেড") : t("Active", "সক্রিয়")}
-                     </p>
-                   </div>
+        <div className={`flex-1 p-4 md:p-8 space-y-6 md:space-y-8 relative ${integrationSkipped && activeTab !== 'settings' && activeTab !== 'subscription' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
+          {integrationSkipped && activeTab !== 'settings' && activeTab !== 'subscription' && (
+             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md p-4">
+               <div className="max-w-sm w-full bg-card border border-border rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-xl shadow-[#1877F2]/5 mt-[-10vh]">
+                 <div className="absolute top-0 left-0 w-full h-1 bg-[#1877F2]"></div>
+                 <div className="w-16 h-16 bg-[#1877F2]/10 rounded-2xl flex items-center justify-center mx-auto mb-5 relative group transition-all">
+                   <div className="absolute inset-0 bg-[#1877F2]/20 rounded-2xl blur-lg group-hover:bg-[#1877F2]/30 transition-all"></div>
+                   <Facebook className="w-8 h-8 text-[#1877F2] relative z-10" />
                  </div>
-               </div>
-               
-               <div className="flex flex-col items-center justify-center py-8">
-                 <div className="max-w-md w-full bg-card border border-border rounded-[2.5rem] p-8 md:p-10 text-center relative overflow-hidden shadow-2xl shadow-orange/5">
-                   <div className="absolute top-0 left-0 w-full h-1.5 bg-orange"></div>
-                   <div className="w-24 h-24 bg-orange/10 rounded-3xl flex items-center justify-center mx-auto mb-6 relative group transition-all">
-                     <div className="absolute inset-0 bg-orange/20 rounded-3xl blur-xl group-hover:bg-orange/30 transition-all"></div>
-                     <AlertCircle className="w-10 h-10 text-orange relative z-10" />
-                   </div>
-                   <h2 className="text-2xl font-black mb-3 font-syne tracking-tight">
-                     {language === 'bn' ? 'ফেসবুক কানেক্ট করুন' : 'Connect Facebook'}
-                   </h2>
-                   <p className="text-text2 mb-8 text-sm leading-relaxed">
-                     {language === 'bn' 
-                       ? `আপনার ${activeTab === 'crm' ? 'সিআরএম' : activeTab === 'overview' ? 'ড্যাশবোর্ড' : activeTab === 'reports' ? 'অ্যানালিটিক্স' : activeTab === 'conversations' ? 'ম্যাসেজ ও কনভারসেশন' : activeTab === 'orders' ? 'অর্ডার ট্র্যাকিং' : 'এই পেজের'} সমস্ত ফিচার আনলক করতে আপনার ফেসবুক পেজ এবং অ্যাড অ্যাকাউন্টটি কানেক্ট করুন।` 
-                       : `To unlock ${activeTab === 'crm' ? 'CRM' : activeTab === 'overview' ? 'dashboard' : activeTab === 'reports' ? 'analytics' : activeTab === 'conversations' ? 'conversations' : activeTab === 'orders' ? 'orders' : 'this page'} and all its tracking features, please connect your Meta Page and Ad Account.`}
-                   </p>
-                   <button 
-                     onClick={() => { onStartConnectFb && onStartConnectFb(); }} 
-                     className="bg-[#1877F2] text-white w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-[#166fe5] shadow-lg shadow-[#1877F2]/20 hover:-translate-y-0.5 active:translate-y-0 transition-all"
-                   >
-                     <Facebook className="w-5 h-5 shrink-0" fill="currentColor" />
-                     {language === 'bn' ? 'কানেক্ট করুন' : 'Connect Now'}
-                   </button>
-                 </div>
+                 <h2 className="text-xl font-black mb-2 font-syne tracking-tight">
+                   {language === 'bn' ? 'ফেসবুক কানেক্ট করুন' : 'Connect Facebook'}
+                 </h2>
+                 <p className="text-text2 mb-6 text-sm leading-relaxed">
+                   {language === 'bn' 
+                     ? `সম্পূর্ণ ফিচার আনলক করতে আপনার ফেসবুক পেজ এবং অ্যাড অ্যাকাউন্টটি কানেক্ট করুন।` 
+                     : `Connect Facebook to unlock full features.`}
+                 </p>
+                 <button 
+                   onClick={() => { onStartConnectFb && onStartConnectFb(); }} 
+                   className="bg-[#1877F2] text-white w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-[#166fe5] shadow-lg shadow-[#1877F2]/20 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+                 >
+                   <Facebook className="w-5 h-5 shrink-0" fill="currentColor" />
+                   {language === 'bn' ? 'কানেক্ট করুন' : 'Connect Now'}
+                 </button>
                </div>
              </div>
-          ) : (
-            <>
+          )}
+
+          <>
           {activeTab === "overview" && (
             <div className="space-y-8">
               {/* Welcome Section */}
@@ -3918,6 +3897,30 @@ export default function Dashboard({
                                   )}
                                 </span>
                               )}
+                            {order.status === "Returned" &&
+                              order.returnedDate && (
+                                <span className="text-[9px] text-red font-bold mt-0.5">
+                                  {t("Returned:", "রিটার্ন:")}{" "}
+                                  {new Date(
+                                    order.returnedDate,
+                                  ).toLocaleDateString(
+                                    language === "bn" ? "bn-BD" : "en-GB",
+                                    { day: "2-digit", month: "short" },
+                                  )}
+                                </span>
+                              )}
+                            {order.status === "Cancelled" &&
+                              order.cancelledDate && (
+                                <span className="text-[9px] text-text3 font-bold mt-0.5">
+                                  {t("Cancelled:", "বাতিল:")}{" "}
+                                  {new Date(
+                                    order.cancelledDate,
+                                  ).toLocaleDateString(
+                                    language === "bn" ? "bn-BD" : "en-GB",
+                                    { day: "2-digit", month: "short" },
+                                  )}
+                                </span>
+                              )}
                           </div>
                         </td>
                         <td className="p-3 text-xs font-mono text-orange font-bold font-mono">
@@ -4819,10 +4822,37 @@ export default function Dashboard({
                                         )}
                                       </span>
                                     )}
+                                  {order.status === "Returned" &&
+                                    order.returnedDate && (
+                                      <span className="text-[9px] text-red font-bold mt-0.5">
+                                        {t("Returned:", "রিটার্ন:")}{" "}
+                                        {new Date(
+                                          order.returnedDate,
+                                        ).toLocaleDateString(
+                                          language === "bn" ? "bn-BD" : "en-GB",
+                                          { day: "2-digit", month: "short" },
+                                        )}
+                                      </span>
+                                    )}
+                                  {order.status === "Cancelled" &&
+                                    order.cancelledDate && (
+                                      <span className="text-[9px] text-text3 font-bold mt-0.5">
+                                        {t("Cancelled:", "বাতিল:")}{" "}
+                                        {new Date(
+                                          order.cancelledDate,
+                                        ).toLocaleDateString(
+                                          language === "bn" ? "bn-BD" : "en-GB",
+                                          { day: "2-digit", month: "short" },
+                                        )}
+                                      </span>
+                                    )}
                                 </div>
                               </td>
                               <td className="p-4 text-xs font-mono text-orange font-bold">
                                 {order.uid}
+                              </td>
+                              <td className="p-4 text-xs text-text2 max-w-[150px] truncate" title={order.product}>
+                                {order.product}
                               </td>
                               <td className="p-4">
                                 <div className="flex items-center gap-3">
@@ -5217,9 +5247,6 @@ export default function Dashboard({
                         <h3 className="font-syne font-black text-sm uppercase tracking-tight flex items-center gap-2">
                           <Store className="w-4 h-4 text-orange" />
                           {t("Business Information", "বিজনেস তথ্য")}
-                          <span className="text-[9px] font-black uppercase text-text3 bg-bg3 px-2 py-0.5 rounded-md ml-auto">
-                            Optional
-                          </span>
                         </h3>
                         <div className="grid sm:grid-cols-2 gap-x-6 gap-y-5">
                           <div className="space-y-1.5">
@@ -5512,7 +5539,7 @@ export default function Dashboard({
                     </div>
 
                     <div className="space-y-4">
-                      <div className="p-5 bg-white/80 dark:bg-black/40 rounded-2xl border border-red/20 shadow-sm">
+                      <div className="p-5 bg-card dark:bg-bg2 rounded-2xl border border-red/20 shadow-sm">
                         <p className="text-sm font-black text-text mb-1.5">
                           {t("Delete My Account", "অ্যাকাউন্ট মুছে ফেলুন")}
                         </p>
@@ -5547,9 +5574,6 @@ export default function Dashboard({
                     <h3 className="font-bold text-sm border-b border-border pb-3 flex items-center gap-2">
                       <Store className="w-4 h-4 text-orange" />
                       {t("Business Information", "বিজনেস তথ্য")}
-                      <span className="text-[9px] font-black uppercase text-text3 bg-bg3 px-2 py-0.5 rounded-md ml-auto">
-                        Optional
-                      </span>
                     </h3>
                     <div className="space-y-4">
                       <div className="grid sm:grid-cols-2 gap-4">
@@ -5749,15 +5773,6 @@ export default function Dashboard({
                             "আপনার প্রাইমারি ইমেইলে প্রফেশনাল আপডেটগুলো পান।",
                           ),
                           icon: Globe,
-                        },
-                        {
-                          id: "sms",
-                          label: t("SMS Alerts", "এসএমএস অ্যালার্ট"),
-                          desc: t(
-                            "Get critical security and order updates via mobile SMS.",
-                            "মোবাইল এসএমএস-এর মাধ্যমে গুরুত্বপূর্ণ আপডেট পান।",
-                          ),
-                          icon: Zap,
                         },
                       ].map((item) => (
                         <div
@@ -5963,7 +5978,10 @@ export default function Dashboard({
                           </p>
                           <div className="flex items-center gap-3">
                             <h4 className="text-2xl font-black text-text tracking-tighter uppercase">
-                              {settings.subscription_plan}
+                              {settings.subscription_plan === "Starter" || settings.subscription_plan === "Free Trial" ? "ফ্রি ট্রায়াল" : 
+                               settings.subscription_plan === "growth" ? "পেইড (গ্রোথ)" : 
+                               settings.subscription_plan === "pro" ? "পেইড (প্রো)" : 
+                               "ফ্রি ট্রায়াল"}
                             </h4>
                             <span className="bg-green-500/10 text-green-500 text-[9px] font-black uppercase px-2.5 py-1 rounded-full border border-green-500/20 shadow-sm animate-pulse-slow">
                               {t("Active", "অ্যাক্টিভ")}
@@ -5977,7 +5995,7 @@ export default function Dashboard({
                             {toBanglaNumber(
                               new Date(
                                 settings.trial_ends_at,
-                              ).toLocaleDateString(),
+                              ).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' }),
                             )}
                           </p>
                         </div>
@@ -5986,7 +6004,7 @@ export default function Dashboard({
                             {t("Member Since", "মেম্বারশিপ শুরু")}
                           </p>
                           <p className="font-bold text-sm text-text">
-                            {t("December 20, 2025", "২০ ডিসেম্বর, ২০২৫")}
+                            {user?.created_at ? toBanglaNumber(new Date(user.created_at).toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' })) : toBanglaNumber(new Date().toLocaleDateString('bn-BD', { year: 'numeric', month: 'long', day: 'numeric' }))}
                           </p>
                         </div>
                       </div>
@@ -6009,7 +6027,7 @@ export default function Dashboard({
                               settings?.orders_this_month_count || 0,
                             )}{" "}
                             <span className="text-text3 text-[11px] font-bold">
-                              / {toBanglaNumber(100)}
+                              / {settings.subscription_plan === "pro" ? "আনলিমিটেড" : toBanglaNumber(settings.subscription_plan === "growth" ? 300 : 100)}
                             </span>
                           </p>
                         </div>
@@ -6017,12 +6035,12 @@ export default function Dashboard({
                           <motion.div
                             initial={{ width: 0 }}
                             animate={{
-                              width: `${Math.min((settings.orders_this_month_count / 100) * 100, 100)}%`,
+                              width: `${Math.min((settings.orders_this_month_count / (settings.subscription_plan === "pro" ? Infinity : settings.subscription_plan === "growth" ? 300 : 100)) * 100, 100)}%`,
                             }}
                             className={`h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,87,34,0.3)] ${
-                              settings.orders_this_month_count > 90
+                              settings.orders_this_month_count > (settings.subscription_plan === "pro" ? Infinity : settings.subscription_plan === "growth" ? 270 : 90)
                                 ? "bg-red"
-                                : settings.orders_this_month_count > 70
+                                : settings.orders_this_month_count > (settings.subscription_plan === "pro" ? Infinity : settings.subscription_plan === "growth" ? 210 : 70)
                                   ? "bg-orange"
                                   : "bg-orange shadow-[0_0_15px_rgba(255,87,34,0.4)]"
                             }`}
@@ -8212,6 +8230,21 @@ export default function Dashboard({
                                           ).toLocaleDateString(),
                                         )}
                                       </p>
+                                      {item.status === "Delivered" && item.deliveredDate && (
+                                        <p className="text-[10px] text-green-500 font-bold mt-1">
+                                          {t("Delivered:", "ডেলিভারি:")} {toBanglaNumber(new Date(item.deliveredDate).toLocaleDateString())}
+                                        </p>
+                                      )}
+                                      {item.status === "Returned" && item.returnedDate && (
+                                        <p className="text-[10px] text-red font-bold mt-1">
+                                          {t("Returned:", "রিটার্ন:")} {toBanglaNumber(new Date(item.returnedDate).toLocaleDateString())}
+                                        </p>
+                                      )}
+                                      {item.status === "Cancelled" && item.cancelledDate && (
+                                        <p className="text-[10px] text-text3 font-bold mt-1">
+                                          {t("Cancelled:", "বাতিল:")} {toBanglaNumber(new Date(item.cancelledDate).toLocaleDateString())}
+                                        </p>
+                                      )}
                                     </div>
                                     <div className="space-y-1 text-right">
                                       <p className="text-[10px] text-text3 uppercase font-bold">
@@ -9120,7 +9153,7 @@ export default function Dashboard({
             )}
           </AnimatePresence>
             </>
-          )}
+          
         </div>
       </main>
     </div>
