@@ -50,7 +50,7 @@ export const Logo: React.FC<LogoProps> = ({ className = "", size = 'md', showTex
       </div>
       {showText && (
         <span className={`${currentSize.text} font-black tracking-tight text-text whitespace-nowrap font-syne`}>
-          Track<span className="text-orange">oo</span>ra<span className="text-cyan ml-0.5">BD</span>
+          Track<span className="text-orange">oo</span>ra
         </span>
       )}
     </div>

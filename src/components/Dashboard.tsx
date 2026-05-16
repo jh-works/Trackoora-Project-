@@ -188,6 +188,7 @@ export default function Dashboard({
     "bkash" | "nagad" | "bank"
   >("bkash");
   const [paymentPhone, setPaymentPhone] = useState("");
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<
     "idle" | "processing" | "success" | "error"
   >("idle");
@@ -1704,7 +1705,7 @@ export default function Dashboard({
                     setShowConnectSuccessModal(false);
                     setActiveTab('overview');
                   }}
-                  className="bg-orange text-white w-full py-4 text-xs font-bold rounded-xl hover:bg-orange/90 transition-all flex items-center justify-center gap-2 uppercase tracking-wider"
+                  className="btn-primary w-full"
                 >
                   <ArrowRight className="w-4 h-4" /> Go to Dashboard
                 </button>
@@ -1774,13 +1775,13 @@ export default function Dashboard({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowReturnPopup(null)}
-                  className="flex-1 bg-bg3 border border-border py-3 rounded-xl font-bold text-xs hover:bg-bg2 transition-all"
+                  className="btn-secondary flex-1"
                 >
                   {t("Cancel", "বাতিল")}
                 </button>
                 <button
                   onClick={handleConfirmReturn}
-                  className="flex-1 bg-red text-white py-3 rounded-xl font-bold text-xs hover:bg-red/90 transition-all shadow-lg shadow-red/20"
+                  className="btn-primary flex-1 bg-red shadow-red/20"
                 >
                   {t("Confirm Return", "রিটার্ন নিশ্চিত করুন")}
                 </button>
@@ -1949,7 +1950,7 @@ export default function Dashboard({
                               ],
                             });
                           }}
-                          className="flex items-center gap-1.5 text-[10px] font-black bg-orange text-white px-4 py-2 rounded-xl hover:bg-orange/90 transition-all shadow-lg shadow-orange/20 border border-orange"
+                          className="btn-primary !px-4 !py-2 !text-[10px]"
                         >
                           <Plus className="w-3 h-3" /> {t("Add", "যোগ করুন")}
                         </button>
@@ -2303,7 +2304,7 @@ export default function Dashboard({
                   <button
                     type="button"
                     onClick={() => setIsEditingOrder(true)}
-                    className="w-full bg-orange text-white py-4.5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-orange/90 transition-all shadow-xl shadow-orange/30 flex items-center justify-center gap-2 active:scale-[0.98]"
+                    className="btn-primary w-full"
                   >
                     <Edit3 className="w-4 h-4" />
                     {t("Edit Order Details", "অর্ডার এডিট করুন")}
@@ -2322,13 +2323,13 @@ export default function Dashboard({
                           setSelectedOrder(null);
                         }
                       }}
-                      className="w-full bg-bg2 border border-border py-4.5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-bg3 transition-all order-2 sm:order-1 active:scale-[0.98]"
+                      className="btn-secondary w-full order-2 sm:order-1"
                     >
                       {t("Cancel", "বাতিল")}
                     </button>
                     <button
                       onClick={handleSaveOrder}
-                      className="w-full bg-green-500 text-white py-4.5 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-green-600 transition-all shadow-xl shadow-green-500/20 flex items-center justify-center gap-2 order-1 sm:order-2 active:scale-[0.98]"
+                      className="btn-primary w-full bg-green-500 shadow-green-500/20 order-1 sm:order-2"
                     >
                       <Save className="w-4 h-4" />
                       {orders.find((o) => o.id === selectedOrder.id)
@@ -4049,7 +4050,7 @@ export default function Dashboard({
                   <div className="p-4 border-t border-border bg-bg3 text-center w-full rounded-b-xl">
                     <button
                       onClick={() => setActiveTab("crm")}
-                      className="px-6 py-2.5 bg-orange text-white rounded-xl text-xs font-bold shadow-lg shadow-orange/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 mx-auto uppercase tracking-wider"
+                      className="btn-primary mx-auto"
                     >
                       {t(
                         "View All Orders in Management",
@@ -4583,7 +4584,7 @@ export default function Dashboard({
                                     revenue,
                                   })
                                 }
-                                className="px-4 py-2 bg-bg3 text-text3 hover:bg-orange hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm border border-border/50 group-hover:scale-105"
+                                className="btn-secondary !py-1.5 !px-3 !text-[9px]"
                               >
                                 {t("Breakdown", "ব্রেকডাউন")}
                               </button>
@@ -5506,10 +5507,8 @@ export default function Dashboard({
                       </div>
                       <button
                         onClick={() => setShow2faModal(true)}
-                        className={`w-full py-3.5 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all shadow-md relative z-10 ${
-                          is2faEnabled
-                            ? "bg-bg3 text-red hover:bg-red/10 border border-red/10"
-                            : "bg-orange text-white shadow-orange/20 hover:shadow-orange/30 active:scale-95"
+                        className={`w-full ${
+                          is2faEnabled ? "btn-secondary border-red/10 text-red hover:bg-red/5" : "btn-primary shadow-orange/20"
                         }`}
                       >
                         {is2faEnabled
@@ -5572,7 +5571,7 @@ export default function Dashboard({
                                 ),
                               })
                             }
-                            className="text-[9px] font-black uppercase text-red bg-red/10 px-3 py-1.5 rounded-lg border border-red/20 transition-all hover:bg-red hover:text-white"
+                            className="btn-secondary !text-red !bg-red/10 !border-red/20 hover:!bg-red hover:!text-white !py-1.5 !px-3 !text-[9px]"
                           >
                             {t("Logout", "লগআউট")}
                           </button>
@@ -5613,9 +5612,9 @@ export default function Dashboard({
                             setDeleteStep("request");
                             setShowDeleteModal(true);
                           }}
-                          className="w-full sm:w-auto bg-red text-white px-8 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red/90 transition-all shadow-xl shadow-red/30 active:scale-95 border border-red/20"
+                          className="btn-primary bg-red shadow-red/30 w-full sm:w-auto"
                         >
-                          <Trash2 className="w-4 h-4 inline-block mr-2 -mt-0.5" />
+                          <Trash2 className="w-4 h-4 inline-block mr-2" />
                           {t(
                             "Request Account Deletion",
                             "অ্যাকাউন্ট মোছার আবেদন",
@@ -5709,7 +5708,7 @@ export default function Dashboard({
                       </div>
                       <button
                         onClick={handleUpdateBusinessInfo}
-                        className="bg-orange text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-orange/90 transition-all shadow-lg shadow-orange/20 active:scale-95"
+                        className="btn-primary !px-6 !py-2.5"
                       >
                         {t("Update Business Info", "বিজনেস তথ্য আপডেট করুন")}
                       </button>
@@ -5893,7 +5892,7 @@ export default function Dashboard({
                            </div>
                            <p className="text-sm font-bold mb-2">Facebook Not Connected</p>
                            <p className="text-xs text-text3 mb-4">Connect your Facebook Page to track performance.</p>
-                           <button onClick={() => { onStartConnectFb && onStartConnectFb(); }} className="bg-[#1877F2] text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-[#166fe5] shadow-md shadow-[#1877F2]/20 transition-all flex items-center gap-2">
+                           <button onClick={() => { onStartConnectFb && onStartConnectFb(); }} className="btn-primary bg-[#1877F2] shadow-[#1877F2]/20 !px-6 !py-2.5">
                              <Facebook className="w-4 h-4" fill="currentColor" />
                              {t("Connect Facebook", "ফেসবুক কানেক্ট করুন")}
                            </button>
@@ -5944,7 +5943,6 @@ export default function Dashboard({
                   </div>
 
                   {/* Section 2: Telegram Daily Report */}
-
                   <div className="bg-card border border-border rounded-2xl overflow-hidden">
                     <div className="p-5 border-b border-border bg-bg3">
                       <h3 className="font-bold text-sm flex items-center gap-2">
@@ -5992,7 +5990,7 @@ export default function Dashboard({
                                 telegram_chat_id: "mock-id-123",
                               })
                             }
-                            className="bg-cyan text-white px-5 py-2 rounded-xl font-bold text-xs hover:bg-cyan/80 transition-all"
+                            className="btn-primary bg-cyan shadow-cyan/20 !px-5 !py-2"
                           >
                             {t("Connect Telegram", "টেলিগ্রাম কানেক্ট করুন")}
                           </button>
@@ -6013,7 +6011,7 @@ export default function Dashboard({
                       <ArrowLeft className="w-4 h-4" />
                     </button>
                     <h3 className="font-bold text-sm">
-                      {t("Billing & Subscription", "বিলিং ও সাবস্ক্রিপশন")}
+                      {t("Billing & Subscription", "বিলিং ও সাবস্কিপশন")}
                     </h3>
                   </div>
 
@@ -6117,13 +6115,13 @@ export default function Dashboard({
                       <div className="flex flex-col sm:flex-row items-center gap-4 pt-4 border-t border-border">
                         <button
                           onClick={() => setActiveTab("subscription")}
-                          className="w-full sm:flex-1 bg-bg3 border border-border py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest text-text3 hover:text-text hover:bg-bg2 hover:border-border2 transition-all active:scale-[0.98]"
+                          className="btn-secondary w-full sm:flex-1 py-3.5 !text-[10px]"
                         >
-                          {t("Manage Subscription", "সাবক্রিপশন ম্যানেজ")}
+                          {t("Manage Subscription", "সাবস্ক্রিপশন ম্যানেজ")}
                         </button>
                         <button
                           onClick={() => setActiveTab("subscription")}
-                          className="w-full sm:flex-1 bg-orange text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-orange/20 hover:shadow-orange/30 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+                          className="btn-primary w-full sm:flex-1 py-3.5 shadow-orange/20 !text-[10px]"
                         >
                           {t("Upgrade Current Plan", "প্ল্যান আপগ্রেড করুন")}
                         </button>
@@ -6132,7 +6130,7 @@ export default function Dashboard({
                   </div>
 
                   <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
-                    <div className="p-4 border-b border-border bg-bg3/50">
+                    <div className="p-5 border-b border-border bg-bg3">
                       <h3 className="font-bold text-sm flex items-center gap-2">
                         <History className="w-4 h-4 text-orange" />
                         {t(
@@ -6404,7 +6402,7 @@ export default function Dashboard({
                                     </p>
                                     <button
                                       onClick={() => toast.dismiss(t_toast.id)}
-                                      className="w-full py-4 bg-orange text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-orange/20 hover:scale-105 transition-all"
+                                      className="btn-primary w-full shadow-orange/20"
                                     >
                                       {t("Great, Thanks!", "ধন্যবাদ!")}
                                     </button>
@@ -6513,7 +6511,7 @@ export default function Dashboard({
                     </div>
                     <button
                       onClick={() => setSelectedCampaign(null)}
-                      className="p-3 hover:bg-bg3 rounded-2xl transition-all shadow-inner border border-transparent hover:border-border"
+                      className="p-3 hover:bg-bg3 rounded-2xl transition-all shadow-inner border border-transparent hover:border-border btn-secondary !p-3"
                     >
                       <X className="w-6 h-6" />
                     </button>
@@ -6734,7 +6732,7 @@ export default function Dashboard({
                     </div>
                     <button
                       onClick={() => setShowFollowUpPanel(null)}
-                      className="p-1.5 hover:bg-bg3 rounded-full transition-all text-text3 hover:text-red bg-bg3/20"
+                      className="p-1.5 hover:bg-bg3 rounded-full transition-all text-text3 hover:text-red bg-bg3/20 btn-secondary !p-1.5 !rounded-full"
                     >
                       <X className="w-4 h-4" />
                     </button>
@@ -6816,7 +6814,7 @@ export default function Dashboard({
 
                         <button
                           onClick={() => setFollowUpMode("edit")}
-                          className="w-full bg-bg3 border border-border text-text py-4 rounded-2xl font-black text-xs hover:border-orange transition-all flex items-center justify-center gap-2 shadow-sm"
+                          className="btn-secondary w-full py-4 !text-xs"
                         >
                           <Settings className="w-4 h-4" />{" "}
                           {t("Edit Follow-Up Details", "ফলো-আপ এডিট করুন")}
@@ -6845,8 +6843,6 @@ export default function Dashboard({
                                     delay,
                                     delay === "3 hours"
                                       ? "৩ ঘণ্টা পরে"
-                                      : delay === "6 hours"
-                                        ? "৬ ঘণ্টা পরে"
                                         : delay === "3 days"
                                           ? "৩ দিন পরে"
                                           : "৭ দিন পরে",
@@ -6966,7 +6962,7 @@ export default function Dashboard({
                           setFollowUpDoneCount((prev) => prev + 1);
                           setShowFollowUpPanel(null);
                         }}
-                        className="w-full bg-cyan text-white py-4 rounded-2xl font-black text-sm hover:bg-cyan/90 transition-all flex items-center justify-center gap-2 shadow-xl shadow-cyan/30"
+                        className="btn-primary bg-cyan shadow-cyan/30 w-full"
                       >
                         <Clock className="w-5 h-5" />{" "}
                         {showFollowUpPanel.mode === "view"
@@ -6974,16 +6970,16 @@ export default function Dashboard({
                           : t("Schedule Follow-up", "ফলো-আপ শিডিউল")}
                       </button>
                     )}
-                    <button
-                      onClick={() => {
-                        setShowFollowUpPanel(null);
-                      }}
-                      className="w-full bg-transparent border border-border py-4 rounded-2xl font-black text-sm text-text2 hover:bg-bg3 transition-all"
-                    >
-                      {followUpMode === "view"
-                        ? t("Close Panel", "প্যানেল বন্ধ করুন")
-                        : t("Discard Schedule", "শিডিউল বাতিল")}
-                    </button>
+                      <button
+                        onClick={() => {
+                          setShowFollowUpPanel(null);
+                        }}
+                        className="btn-secondary w-full py-4 shadow-sm"
+                      >
+                        {followUpMode === "view"
+                          ? t("Close Panel", "প্যানেল বন্ধ করুন")
+                          : t("Discard Schedule", "শিডিউল বাতিল")}
+                      </button>
                   </div>
                 </motion.div>
               </>
@@ -6994,7 +6990,7 @@ export default function Dashboard({
               <div className="flex items-center gap-3 mb-6">
                 <button
                   onClick={() => setActiveTab("settings")}
-                  className="p-2 hover:bg-bg3 rounded-xl text-text3 transition-all border border-transparent hover:border-border/50"
+                  className="btn-secondary !p-2 !rounded-xl"
                 >
                   <ArrowLeft className="w-5 h-5" />
                 </button>
@@ -7047,99 +7043,175 @@ export default function Dashboard({
                 </div>
               ) : (
                 <div className="max-w-md mx-auto">
-                  <div
-                    onClick={() => setSelectedPlan("starter")}
-                    className="relative bg-card rounded-[2.5rem] p-10 cursor-pointer transition-all border-2 border-orange shadow-[0_20px_50px_rgba(249,115,22,0.15)] overflow-hidden group"
-                  >
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-orange/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-orange/10 transition-colors" />
+                  {!showPaymentForm ? (
+                    <div
+                      onClick={() => setSelectedPlan("starter")}
+                      className="relative bg-card rounded-[2.5rem] p-10 cursor-pointer transition-all border-2 border-orange shadow-[0_20px_50px_rgba(249,115,22,0.15)] overflow-hidden group"
+                    >
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-orange/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl group-hover:bg-orange/10 transition-colors" />
 
-                    <div className="absolute top-6 right-6 w-8 h-8 bg-orange text-white rounded-full flex items-center justify-center shadow-lg shadow-orange/20">
-                      <Check className="w-5 h-5" />
-                    </div>
-
-                    <div className="flex items-center gap-3 mb-6">
-                      <div className="w-12 h-12 rounded-2xl bg-orange/10 flex items-center justify-center">
-                        <Zap className="w-6 h-6 text-orange" />
+                      <div className="absolute top-6 right-6 w-8 h-8 bg-orange text-white rounded-full flex items-center justify-center shadow-lg shadow-orange/20">
+                        <Check className="w-5 h-5" />
                       </div>
-                      <div>
-                        <h3 className="text-xl font-black uppercase tracking-tight">
-                          {t("Starter Plan", "স্টার্টার প্ল্যান")}
-                        </h3>
-                        <p className="text-[10px] text-text3 font-bold uppercase tracking-widest">
-                          {t("Most Popular", "সবার পছন্দ")}
+
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-12 h-12 rounded-2xl bg-orange/10 flex items-center justify-center">
+                          <Zap className="w-6 h-6 text-orange" />
+                        </div>
+                        <div>
+                          <h3 className="text-xl font-black uppercase tracking-tight">
+                            {t("Starter Plan", "স্টার্টার প্ল্যান")}
+                          </h3>
+                          <p className="text-[10px] text-text3 font-bold uppercase tracking-widest">
+                            {t("Most Popular", "সবার পছন্দ")}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-baseline gap-2 mb-8 border-b border-border pb-6">
+                        <span className="text-5xl font-black font-syne text-orange tracking-tighter">
+                          ৳{toBanglaNumber(499)}
+                        </span>
+                        <div className="flex flex-col">
+                          <span className="text-text3 text-sm font-bold">
+                            / {t("month", "মাস")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <ul className="space-y-5 text-sm mb-10">
+                        {[
+                          "Meta Algorithm Signal (Server-side)",
+                          "Ad Attribution Dashboard",
+                          "Conversation Card Dashboard",
+                          "Auto Order Confirmation Message",
+                          "Order Status Tracker",
+                          "Smart CRM Feature",
+                          "Telegram Daily Report",
+                          "সম্পূর্ণ বাংলা Interface",
+                          "১টি Facebook Page · মাসে ১০০ অর্ডার",
+                        ].map((feature, idx) => (
+                          <li
+                            key={idx}
+                            className="flex items-center gap-4 text-text font-medium text-xs"
+                          >
+                            <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                              <Check className="w-3 h-3 text-green-500" />
+                            </div>
+                            {t(feature, feature)}
+                          </li>
+                        ))}
+                      </ul>
+
+                      <div className="p-4 bg-orange/5 border border-orange/10 rounded-2xl mb-8">
+                        <p className="text-[10px] text-orange font-bold text-center leading-relaxed">
+                          {t(
+                            "Ready to scale? This plan provides everything you need to manage up to ৳১০০,০০০/month in revenue.",
+                            "আপনার বিজনেস সফলভাবে এগিয়ে নিতে এই প্ল্যানটি সব ধরনের ফিচার প্রদান করে।"
+                          )}
                         </p>
                       </div>
-                    </div>
 
-                    <div className="flex items-baseline gap-2 mb-8 border-b border-border pb-6">
-                      <span className="text-5xl font-black font-syne text-orange tracking-tighter">
-                        ৳{toBanglaNumber(499)}
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="text-text3 text-sm font-bold">
-                          / {t("month", "মাস")}
-                        </span>
-                      </div>
-                    </div>
+                      <button
+                        onClick={() => setShowPaymentForm(true)}
+                        className="btn-primary w-full py-5 !text-[12px] shadow-orange/20 hover:scale-[1.02]"
+                      >
+                        {t("Get Started Now", "এখনই শুরু করুন")}
+                      </button>
 
-                    <ul className="space-y-5 text-sm mb-10">
-                      {[
-                        "Meta Algorithm Signal (Server-side)",
-                        "Ad Attribution Dashboard",
-                        "Conversation Card Dashboard",
-                        "Auto Order Confirmation Message",
-                        "Order Status Tracker",
-                        "Smart CRM Feature",
-                        "Telegram Daily Report",
-                        "সম্পূর্ণ বাংলা Interface",
-                        "১টি Facebook Page · মাসে ১০০ অর্ডার",
-                      ].map((feature, idx) => (
-                        <li
-                          key={idx}
-                          className="flex items-center gap-4 text-text font-medium text-xs"
-                        >
-                          <div className="w-5 h-5 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                            <Check className="w-3 h-3 text-green-500" />
-                          </div>
-                          {t(feature, feature)}
-                        </li>
-                      ))}
-                    </ul>
-
-                    <div className="p-4 bg-orange/5 border border-orange/10 rounded-2xl mb-8">
-                      <p className="text-[10px] text-orange font-bold text-center leading-relaxed">
+                      <p className="text-[9px] text-text3 font-bold uppercase tracking-widest text-center mt-6 flex items-center justify-center gap-2">
+                        <ShieldCheck className="w-3.5 h-3.5 text-green-500" />{" "}
                         {t(
-                          "Ready to scale? This plan provides everything you need to manage up to ৳১০০,০০০/month in revenue.",
-                          "আপনার বিজনেস সফলভাবে এগিয়ে নিতে এই প্ল্যানটি সব ধরনের ফিচার প্রদান করে।",
+                          "Secure Payment via SSLCommerz",
+                          "SSLCommerz-এর মাধ্যমে নিরাপদ পেমেন্ট"
                         )}
                       </p>
                     </div>
+                  ) : (
+                    <div className="bg-card rounded-[2.5rem] p-8 sm:p-10 border-2 border-border shadow-xl">
+                      <div className="flex items-center mb-8 pb-6 border-b border-border">
+                        <button 
+                          onClick={() => setShowPaymentForm(false)}
+                          className="btn-secondary !w-10 !h-10 !rounded-full !p-0"
+                        >
+                          <ChevronLeft className="w-5 h-5" />
+                        </button>
+                        <div className="ml-4">
+                          <h3 className="text-xl font-bold">{t("Payment Setup", "পেমেন্ট সেটআপ")}</h3>
+                          <p className="text-xs text-text3">{t("Starter Plan", "স্টার্টার প্ল্যান")} - ৳{toBanglaNumber(499)}</p>
+                        </div>
+                      </div>
 
-                    <button
-                      onClick={() => {
-                        setPaymentStatus("loading");
-                        setTimeout(() => {
-                          setPaymentStatus("success");
-                        }, 2000);
-                      }}
-                      className="w-full py-5 bg-orange text-white rounded-2xl font-black text-[12px] uppercase tracking-widest shadow-2xl shadow-orange/20 hover:scale-[1.02] active:scale-95 transition-all group overflow-hidden relative"
-                    >
-                      <div className="absolute inset-0 bg-white/10 -translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                      {paymentStatus === "loading" ? (
-                        <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
-                      ) : (
-                        t("Get Started Now", "এখনই শুরু করুন")
-                      )}
-                    </button>
+                      <div className="space-y-6">
+                        <div>
+                          <label className="block text-sm font-bold mb-3">{t("Select Payment Method", "পেমেন্ট মাধ্যম বেছে নিন")}</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              onClick={() => setSubPaymentMethod("bkash")}
+                              className={`py-4 rounded-xl border-2 font-bold transition-all flex flex-col items-center justify-center gap-2 ${
+                                subPaymentMethod === "bkash" 
+                                  ? "border-pink-500 bg-pink-500/5 text-pink-600" 
+                                  : "border-border hover:border-pink-500/30 text-text"
+                              }`}
+                            >
+                              <div className="w-8 h-8 rounded-full bg-pink-500 text-white flex items-center justify-center font-black text-[10px]">bKash</div>
+                              bKash
+                            </button>
+                            <button
+                              onClick={() => setSubPaymentMethod("nagad")}
+                              className={`py-4 rounded-xl border-2 font-bold transition-all flex flex-col items-center justify-center gap-2 ${
+                                subPaymentMethod === "nagad" 
+                                  ? "border-orange border-opacity-80 bg-orange/5 text-orange" 
+                                  : "border-border hover:border-orange/30 text-text"
+                              }`}
+                            >
+                              <div className="w-8 h-8 rounded-full bg-orange text-white flex items-center justify-center font-black text-[10px]">Nagad</div>
+                              Nagad
+                            </button>
+                          </div>
+                        </div>
 
-                    <p className="text-[9px] text-text3 font-bold uppercase tracking-widest text-center mt-6 flex items-center justify-center gap-2">
-                      <ShieldCheck className="w-3.5 h-3.5 text-green-500" />{" "}
-                      {t(
-                        "Secure Payment via SSLCommerz",
-                        "SSLCommerz-এর মাধ্যমে নিরাপদ পেমেন্ট",
-                      )}
-                    </p>
-                  </div>
+                        <div>
+                          <label className="block text-sm font-bold mb-2">{t("Mobile Number", "মোবাইল নাম্বার")}</label>
+                          <input
+                            type="tel"
+                            placeholder="e.g., 01XXXXXXXXX"
+                            value={paymentPhone}
+                            onChange={(e) => setPaymentPhone(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl border border-border bg-background focus:outline-none focus:border-orange focus:ring-1 focus:ring-orange transition-all"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="mt-10">
+                        <button
+                          onClick={() => {
+                            if (!paymentPhone) {
+                              alert(t("Please enter your mobile number", "অনুগ্রহ করে আপনার mobile number দিন"));
+                              return;
+                            }
+                            setPaymentStatus("processing");
+                            // Placeholder for SSLCommerce redirection
+                            setTimeout(() => {
+                              setPaymentStatus("success");
+                              setShowPaymentForm(false);
+                            }, 2000);
+                          }}
+                          disabled={!paymentPhone || paymentStatus === ("processing" as any)}
+                          className="btn-primary w-full py-4 !bg-zinc-900 shadow-zinc-900/20"
+                        >
+                          {paymentStatus === ("processing" as any) ? (
+                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          ) : (
+                            t("Proceed to SSLCommerz", "SSLCommerz-এ পেমেন্ট করুন")
+                          )}
+                        </button>
+                        <p className="text-[10px] text-text3 text-center mt-4">
+                          {t("You will be redirected to SSLCommerz secure checkout", "আপনাকে SSLCommerz এর নিরাপদ চেকআউটে নিয়ে যাওয়া হবে")}
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

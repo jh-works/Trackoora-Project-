@@ -129,38 +129,40 @@
 
   /* ── BUTTONS ────────────────────────────────── */
   .btn-primary {
-    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     background: var(--orange); color: #fff;
     font-family: 'Hind Siliguri', sans-serif;
-    font-size: 17px; font-weight: 700;
-    padding: 17px 38px; border-radius: 14px;
+    font-size: 12px; font-weight: 700;
+    padding: 10px 24px; border-radius: 12px;
     border: none; cursor: pointer; text-decoration: none;
-    transition: all .25s ease;
-    box-shadow: 0 8px 40px rgba(249,115,22,0.35), 0 0 0 1px rgba(249,115,22,0.2);
-    position: relative; overflow: hidden;
-  }
-  .btn-primary::before {
-    content: ''; position: absolute; inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
-    border-radius: 14px;
+    transition: all .2s ease;
+    box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2), 0 4px 6px -2px rgba(249, 115, 22, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   .btn-primary:hover {
-    background: var(--orange2);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 50px rgba(249,115,22,0.5), 0 0 0 1px rgba(249,115,22,0.3);
+    transform: scale(1.02);
+    background: var(--orange);
+    box-shadow: 0 20px 25px -5px rgba(249, 115, 22, 0.2), 0 10px 10px -5px rgba(249, 115, 22, 0.1);
   }
-  .btn-primary.large { font-size: 19px; padding: 20px 48px; }
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+  .btn-primary.large { font-size: 14px; padding: 14px 32px; }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
     background: transparent; color: var(--text2);
     font-family: 'Hind Siliguri', sans-serif;
-    font-size: 15px; font-weight: 500;
-    padding: 15px 28px; border-radius: 12px;
+    font-size: 12px; font-weight: 700;
+    padding: 10px 24px; border-radius: 12px;
     border: 1px solid var(--border2); text-decoration: none;
     transition: all .2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
-  .btn-ghost:hover { border-color: rgba(255,255,255,0.25); color: var(--text); }
+  .btn-ghost:hover { border-color: var(--orange); color: var(--orange); transform: scale(1.02); }
+  .btn-ghost:active { transform: scale(0.95); }
 
   /* ── BADGE ──────────────────────────────────── */
   .hero-badge {
@@ -203,6 +205,61 @@
     white-space: nowrap; flex-shrink: 0;
   }
   .logo span { color: var(--orange); }
+
+  /* ── CUSTOM MENU TOGGLE ─────────────────────── */
+  #checkbox {
+    display: none;
+  }
+
+  .toggle {
+    position: relative;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    transition-duration: .3s;
+  }
+
+  .bars {
+    width: 100%;
+    height: 2.5px;
+    background-color: var(--text3);
+    border-radius: 5px;
+    transition-duration: .3s;
+  }
+
+  .toggle:hover .bars {
+    background-color: var(--orange);
+  }
+
+  #checkbox:checked + .toggle #bar2 {
+    transform: translateY(7.5px) rotate(60deg);
+    margin-left: 0;
+    transform-origin: right;
+    transition-duration: .3s;
+    z-index: 2;
+    background-color: var(--orange);
+  }
+
+  #checkbox:checked + .toggle #bar1 {
+    transform: translateY(15px) rotate(-60deg);
+    transition-duration: .3s;
+    transform-origin: left;
+    z-index: 1;
+    background-color: var(--orange);
+  }
+
+  #checkbox:checked + .toggle {
+    transform: rotate(-90deg);
+  }
+
+  #checkbox:checked + .toggle #bar3 {
+    opacity: 0;
+  }
 
   /* ── HERO ───────────────────────────────────── */
   .hero {
@@ -802,20 +859,28 @@
   .btn-secondary {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    gap: 8px;
     background: var(--card);
     border: 1px solid var(--border2);
     color: var(--text);
-    padding: 12px 24px;
+    padding: 10px 24px;
     border-radius: 12px;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     text-decoration: none;
     transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
   .btn-secondary:hover {
     background: var(--bg2);
     border-color: var(--orange);
-    transform: translateY(-2px);
+    transform: scale(1.02);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  .btn-secondary:active {
+    transform: scale(0.95);
   }
 
   .alert-box {

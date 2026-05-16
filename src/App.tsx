@@ -61,7 +61,38 @@ export default function App() {
   const { t, i18n } = useTranslation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [view, setView] = useState<'landing' | 'auth' | 'dashboard' | 'onboarding'>('landing');
+  const [view, setView] = useState<'landing' | 'auth' | 'dashboard' | 'onboarding' | 'privacy' | 'terms'>(() => { const path = window.location.pathname; if (path === '/privacy-policy') return 'privacy'; if (path === '/terms-of-service') return 'terms'; return 'landing'; });
+  
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/privacy-policy') {
+        setView('privacy');
+      } else if (path === '/terms-of-service') {
+        setView('terms');
+      } else if (path === '/') {
+        setView('landing');
+      }
+    };
+    
+    // Initial check on load
+    const path = window.location.pathname;
+    if (path === '/privacy-policy') {
+      setView('privacy');
+    } else if (path === '/terms-of-service') {
+      setView('terms');
+    }
+    
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  const navigateTo = (path, newView) => {
+    window.history.pushState({}, '', path);
+    setView(newView);
+    setActiveModal(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
   const [user, setUser] = useState<any>(null);
   const [authStep, setAuthStep] = useState<'form' | 'otp'>('form');
   const [onboardingStep, setOnboardingStep] = useState<string>('subscription_selection');
@@ -154,7 +185,7 @@ export default function App() {
         } else if (!localStorage.getItem('demo_user')) {
           localStorage.removeItem('token');
           setUser(null);
-          if (view !== 'landing') setView('auth');
+          if (view !== 'landing' && view !== 'privacy' && view !== 'terms') setView('auth');
         }
       });
 
@@ -450,17 +481,17 @@ export default function App() {
             {onboardingStep === 'subscription_selection' && (
               <motion.div key="subscription" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
                 <h2 className="text-3xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'আপনার প্ল্যান বেছে নিন' : 'Choose Your Plan'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'কীভাবে শুরু করতে চান তা নির্বাচন করুন।' : 'Select how you want to start with Trackoora BD.'}</p>
+                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'কীভাবে শুরু করতে চান তা নির্বাচন করুন।' : 'Select how you want to start with Trackoora.'}</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                   <div className="bg-bg3 border border-border p-6 rounded-2xl hover:border-orange cursor-pointer transition-all flex flex-col items-center" onClick={() => setOnboardingStep('survey_source')}>
                     <h3 className="text-xl font-bold text-text mb-2">{i18n.language === 'bn' ? '৩০ দিনের ফ্রি ট্রায়াল' : '30-Day Free Trial'}</h3>
                     <p className="text-text2 text-sm mb-4">{i18n.language === 'bn' ? 'সব ফিচার বিনামূল্যে ব্যবহার করুন।' : 'Explore all features for free.'}</p>
-                    <button className="bg-bg2 text-text font-bold py-2 px-6 rounded-xl w-full hover:bg-orange hover:text-white transition-all">{i18n.language === 'bn' ? 'ট্রায়াল শুরু করুন' : 'Start Trial'}</button>
+                    <button className="btn-secondary w-full" onClick={() => setOnboardingStep('survey_source')}>{i18n.language === 'bn' ? 'ট্রায়াল শুরু করুন' : 'Start Trial'}</button>
                   </div>
-                  <div className="bg-orange/10 border border-orange/30 p-6 rounded-2xl hover:border-orange cursor-pointer transition-all flex flex-col items-center" onClick={() => setOnboardingStep('payment_placeholder')}>
+                  <div className="bg-orange/10 border border-orange/30 p-6 rounded-2xl hover:border-orange cursor-pointer transition-all flex flex-col items-center group" onClick={() => setOnboardingStep('payment_placeholder')}>
                     <h3 className="text-xl font-bold text-orange mb-2">{i18n.language === 'bn' ? 'পেইড প্ল্যান' : 'Paid Plan'}</h3>
                     <p className="text-text2 text-sm mb-4">{i18n.language === 'bn' ? 'সর্বোচ্চ লিমিট আনলক করুন।' : 'Unlock maximum limits and growth.'}</p>
-                    <button className="bg-orange text-white font-bold py-2 px-6 rounded-xl w-full hover:bg-orange/80 transition-all">{i18n.language === 'bn' ? 'প্ল্যান বেছে নিন' : 'Select Plan'}</button>
+                    <button className="btn-primary w-full">{i18n.language === 'bn' ? 'প্ল্যান বেছে নিন' : 'Select Plan'}</button>
                   </div>
                 </div>
               </motion.div>
@@ -720,7 +751,7 @@ export default function App() {
                       <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   </div>
-                  <h3 className="text-xl font-bold mb-2">Trackoora BD is requesting access to:</h3>
+                  <h3 className="text-xl font-bold mb-2">Trackoora is requesting access to:</h3>
                   <ul className="text-sm text-left text-gray-600 mb-6 bg-white border border-gray-200 rounded-lg p-4 space-y-2">
                     <li className="flex gap-2">✓ Manage your Pages</li>
                     <li className="flex gap-2">✓ Read Page messages</li>
@@ -787,7 +818,7 @@ export default function App() {
                         <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
                       </svg>
                     </div>
-                    <h3 className="text-xl font-bold mb-2">Trackoora BD is requesting access to:</h3>
+                    <h3 className="text-xl font-bold mb-2">Trackoora is requesting access to:</h3>
                     <ul className="text-sm text-left text-gray-600 mb-6 bg-white border border-gray-200 rounded-lg p-4 space-y-2">
                       <li className="flex gap-2">✓ Manage your Pages</li>
                       <li className="flex gap-2">✓ Read Page messages</li>
@@ -1027,7 +1058,7 @@ export default function App() {
                     type="button" 
                     onClick={handleGoogleAuth}
                     disabled={loading}
-                    className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 border border-gray-200 text-sm shadow-sm"
+                    className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-200 text-[11px] uppercase tracking-wider shadow-sm hover:scale-[1.02] active:scale-95"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1058,7 +1089,7 @@ export default function App() {
                     resetAuthForm();
                     setView('landing');
                   }}
-                  className="w-full bg-bg2 border border-border text-text2 hover:text-text hover:border-orange/50 transition-all py-3.5 rounded-xl text-sm font-bold mt-2 flex items-center justify-center gap-2"
+                  className="btn-secondary w-full mt-2"
                 >
                   <ArrowRight className="w-4 h-4 rotate-180" />
                   {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
@@ -1147,18 +1178,18 @@ export default function App() {
                   <label htmlFor="agreement" className="text-[11px] text-text2 leading-relaxed cursor-pointer">
                     {i18n.language === 'bn' ? (
                       <>
-                        আমি ট্র্যকুরা বিডি-এর{' '}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setActiveModal('terms'); }} className="text-orange font-bold hover:underline">শর্তাবলী</button>
+                        আমি ট্র্যকুরা-এর{' '}
+                        <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/terms-of-service", "terms"); }} className="text-orange font-bold hover:underline">শর্তাবলী</a>
                         {' '}এবং{' '}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setActiveModal('privacy'); }} className="text-orange font-bold hover:underline">গোপনীয়তা নীতি</button>
+                        <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/privacy-policy", "privacy"); }} className="text-orange font-bold hover:underline">গোপনীয়তা নীতি</a>
                         -তে সম্মত হচ্ছি।
                       </>
                     ) : (
                       <>
                         I agree to the{' '}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setActiveModal('terms'); }} className="text-orange font-bold hover:underline">Terms of Service</button>
+                        <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/terms-of-service", "terms"); }} className="text-orange font-bold hover:underline">Terms of Service</a>
                         {' '}and{' '}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setActiveModal('privacy'); }} className="text-orange font-bold hover:underline">Privacy Policy</button> of Trackoora BD.
+                        <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/privacy-policy", "privacy"); }} className="text-orange font-bold hover:underline">Privacy Policy</a> of Trackoora.
                       </>
                     )}
                   </label>
@@ -1238,18 +1269,300 @@ export default function App() {
       );
     }
 
+    
+    if (view === 'privacy') {
+      return (
+        <div className="min-h-screen bg-bg text-text pb-20">
+          <nav className="landing-nav relative z-50">
+            <div className="container nav-inner flex justify-center">
+              <a href="#" onClick={(e) => { e.preventDefault(); navigateTo('/', 'landing'); }} className="flex items-center">
+                <Logo size="sm" />
+              </a>
+            </div>
+          </nav>
+          <div className="pt-24 mt-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-card border border-border rounded-3xl p-6 md:p-10 shadow-sm relative overflow-hidden">
+              <h2 className="text-3xl font-black mb-8 font-syne tracking-tight">{i18n.language === 'bn' ? 'গোপনীয়তা নীতি' : 'Privacy Policy'}</h2>
+              <div className="space-y-6">
+                    <div className="modal-highlight-box">
+                      {i18n.language === 'bn' 
+                        ? '(এই Privacy Policy Trackoora-এর সকল সেলার ও তাদের customer-দের ক্ষেত্রে প্রযোজ্য। এটি বাংলাদেশের Cyber Security Act 2023 অনুসারে প্রণীত।)' 
+                        : '(This Privacy Policy applies to all Trackoora sellers and their customers. It is formulated in accordance with the Cyber Security Act 2023 of Bangladesh.)'}
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3>{i18n.language === 'bn' ? '১. আমরা কোন তথ্য সংগ্রহ করি' : '1. What information we collect'}</h3>
+                      <div className="pl-4 space-y-2">
+                        <p className="font-bold text-sm">{i18n.language === 'bn' ? 'সেলার-সম্পর্কিত তথ্য:' : 'Seller-related information:'}</p>
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
+                          <li>{i18n.language === 'bn' ? 'নাম, ফোন নম্বর, ইমেইল — account registration-এর সময়' : 'Name, phone number, email — during account registration'}</li>
+                          <li>{i18n.language === 'bn' ? 'Facebook Page তথ্য ও OAuth access token — Facebook Login-এর মাধ্যমে। আপনার Facebook পাসওয়ার্ড আমরা কখনো দেখি না, সংরক্ষণ করি না' : 'Facebook Page info & OAuth access token — via Facebook Login. We never see or store your Facebook password'}</li>
+                          <li>{i18n.language === 'bn' ? 'Meta Ads account ID — ad performance data pull করতে' : 'Meta Ads account ID — to pull ad performance data'}</li>
+                          <li>{i18n.language === 'bn' ? 'Telegram chat ID — daily report পাঠাতে (যদি সংযুক্ত করেন)' : 'Telegram chat ID — to send daily reports (if connected)'}</li>
+                          <li>{i18n.language === 'bn' ? 'Subscription ও billing তথ্য — payment gateway-এর মাধ্যমে' : 'Subscription & billing info — via payment gateway'}</li>
+                        </ul>
+                        <p className="font-bold text-sm mt-4">{i18n.language === 'bn' ? 'Customer-সম্পর্কিত তথ্য (সেলারের হয়ে সংগৃহীত):' : 'Customer-related information (collected on behalf of the seller):'}</p>
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
+                          <li>{i18n.language === 'bn' ? 'Facebook User ID' : 'Facebook User ID'}</li>
+                          <li>{i18n.language === 'bn' ? 'Customer-এর নাম' : "Customer's name"}</li>
+                          <li>{i18n.language === 'bn' ? 'কোন Ad থেকে এসেছেন' : 'Which Ad they came from'}</li>
+                          <li>{i18n.language === 'bn' ? 'অর্ডার তথ্য' : 'Order information'}</li>
+                        </ul>
+                        <p className="text-sm text-orange font-medium mt-2">
+                          {i18n.language === 'bn' 
+                            ? 'আমরা সংগ্রহ করি না: Customer-এর phone number বা delivery address (Starter Plan-এ) সংগ্রহ করা হয় না।' 
+                            : 'We do not collect: Customer phone number or delivery address (not collected in Starter Plan).'}
+                        </p>
+                      </div>
+
+                      <h3>{i18n.language === 'bn' ? '২. কেন এই তথ্য সংগ্রহ করা হয়' : '2. Why this information is collected'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'Trackoora-এর service প্রদান — এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora service — this is the sole purpose'}</li>
+                        <li>{i18n.language === 'bn' ? 'Meta Algorithm-এ sale signal ও — সেলারের Ads performance উন্নত করতে' : 'Sale signals to Meta Algorithm — to improve seller Ads performance'}</li>
+                        <li>{i18n.language === 'bn' ? 'Ad performance dashboard তৈরি করতে Meta Ads from data pull করা' : 'Pulling data from Meta Ads to create Ad performance dashboard'}</li>
+                        <li>{i18n.language === 'bn' ? 'Telegram daily report পাঠানো' : 'Sending Telegram daily reports'}</li>
+                        <li>{i18n.language === 'bn' ? 'Anonymized, aggregated data — product improvement-এর জন্য (individual চেনা যায় না এমন)' : 'Anonymized, aggregated data — for product improvement (non-identifiable)'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৩. তৃতীয় পক্ষের সাথে তথ্য শেয়ার' : '3. Sharing information with third parties'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'আমরা কোনো তৃতীয় পক্ষের কাছে আপনার তথ্য বিক্রি করি না। শুধুমাত্র Meta-র সাথে Ads ইমপ্রুভমেন্ট এর জন্য প্রয়োজনীয় তথ্য শেয়ার করা হয়।' 
+                          : 'We do not sell your information to any third party. Only necessary information is shared with Meta for Ads improvement.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '৪. তথ্য কীভাবে সুরক্ষিত রাখা হয়' : '4. How information is kept secure'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'Facebook OAuth token ও সব sensitive credentials — high security encryption দিয়ে database-এ সংরক্ষিত' : 'Facebook OAuth token & all sensitive credentials — stored in database with high security encryption'}</li>
+                        <li>{i18n.language === 'bn' ? 'Customer Facebook User ID — Meta-তে পাঠানোর আগে hash করা হয়' : 'Customer Facebook User ID — hashed before sending to Meta'}</li>
+                        <li>{i18n.language === 'bn' ? 'সমস্ত connection — HTTPS/TLS দিয়ে encrypted, কোনো plain HTTP নেই' : 'All connections — encrypted with HTTPS/TLS, no plain HTTP'}</li>
+                        <li>{i18n.language === 'bn' ? 'প্রতিটি seller-এর data সম্পূর্ণ isolated — অন্য কোনো seller কখনো আপনার data দেখতে পারবে না' : "Each seller's data is completely isolated — no other seller can ever see your data"}</li>
+                        <li>{i18n.language === 'bn' ? 'High Security Protection — platform সর্বক্ষণ monitoring-এ আছে' : 'High Security Protection — platform is under constant monitoring'}</li>
+                        <li>{i18n.language === 'bn' ? 'সব admin access log করা হয় — কোনো silent action নেই' : 'All admin access is logged — no silent actions'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৫. তথ্য কতদিন সংরক্ষণ করা হয়' : '5. How long information is stored'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'সক্রিয় account: Subscription চলাকালীন সম্পূর্ণ সময়' : 'Active account: Entire duration of subscription'}</li>
+                        <li>{i18n.language === 'bn' ? 'Cancelled account: বাতিলের ৩০ দিন পর সম্পূর্ণ মুছে ফেলা হয় — seller-কে আগে notify করা হয়' : 'Cancelled account: Completely deleted 30 days after cancellation — seller is notified beforehand'}</li>
+                        <li>{i18n.language === 'bn' ? 'Customer data: সেলারের account active থাকা পর্যন্ত সংরক্ষিত। Account delete হলে customer data-ও মুছে যায়' : "Customer data: Stored as long as seller's account is active. If account is deleted, customer data is also removed"}</li>
+                        <li>{i18n.language === 'bn' ? 'Meta signal logs: ৯০ দিন পর automatically মুছে ফেলা হয়' : 'Meta signal logs: Automatically deleted after 90 days'}</li>
+                        <li>{i18n.language === 'bn' ? 'Application error logs: ৩০ দিন — কোনো personal data এতে থাকে না' : 'Application error logs: 30 days — contains no personal data'}</li>
+                        <li>{i18n.language === 'bn' ? 'Billing records: আইনি কারণে ৭ বছর সংরক্ষিত থাকে' : 'Billing records: Stored for 7 years for legal reasons'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৬. Cookies ও Anonymous Data' : '6. Cookies & Anonymous Data'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Trackoora landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় — আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data — product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
+                          : 'Only essential cookies are used on the Trackoora landing page — to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '৭. আপনার অধিকার' : '7. Your Rights'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'আপনার সমস্ত data দেখার অনুরোধ করতে পারবেন' : 'You can request to see all your data'}</li>
+                        <li>{i18n.language === 'bn' ? 'যেকোনো সময় account delete করে সমস্ত data মুছে ফেলার অনুরোধ করতে পারবেন' : 'You can request to delete your account and all data at any time'}</li>
+                        <li>{i18n.language === 'bn' ? 'Facebook Page disconnect করতে পারবেন — তখন আমাদের Page access তাৎক্ষণিক বাতিল হয়' : 'You can disconnect your Facebook Page — our Page access is then immediately revoked'}</li>
+                        <li>{i18n.language === 'bn' ? 'Account delete করলে ৩০ দিনের মধ্যে সমস্ত data permanently মুছে যাবে' : 'If account is deleted, all data will be permanently removed within 30 days'}</li>
+                        <li>{i18n.language === 'bn' ? 'Data সংক্রান্ত যেকোনো অভিযোগ আমাদের কাছে করতে পারবেন — ৪৮ ঘণ্টার মধ্যে সাড়া দেওয়া হবে' : 'Any data-related complaints can be made to us — we will respond within 48 hours'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৮. বাংলাদেশ Cyber Security Act 2023' : '8. Bangladesh Cyber Security Act 2023'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Trackoora বাংলাদেশের Cyber Security Act 2023-এর আওতায় পরিচালিত। আমাদের data handling practices এই আইন মেনে চলে।' 
+                          : 'Trackoora is operated under the Cyber Security Act 2023 of Bangladesh. Our data handling practices comply with this law.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '৯. Policy পরিবর্তন' : '9. Policy Changes'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Privacy Policy পরিবর্তন হলে সকল সেলারকে Telegram বা email-এ আগে জানানো হবে। পরিবর্তনের ৭ দিন আগে notify করা হবে।' 
+                          : 'Any changes to the Privacy Policy will be notified to all sellers via Telegram or email beforehand. Notification will be sent 7 days prior to changes.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '১০. যোগাযোগ' : '10. Contact'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Privacy সংক্রান্ত যেকোনো প্রশ্ন, অনুরোধ বা অভিযোগের জন্য আমাদের সাথে যোগাযোগ করুন। আমরা ৪৮ ঘণ্টার মধ্যে সাড়া দেবো।' 
+                          : 'For any questions, requests, or complaints regarding privacy, please contact us. We will respond within 48 hours.'}
+                      </p>
+                    </div>
+
+                    <div className="modal-last-updated">
+                      {i18n.language === 'bn' ? 'সর্বশেষ আপডেট: এপ্রিল ২০২৬ · Trackoora' : 'Last Updated: April 2026 · Trackoora'}
+                    </div>
+                  </div>
+              <div className="mt-8 pt-8 border-t border-border flex justify-end">
+                <button 
+                  onClick={() => navigateTo('/', 'landing')} 
+                  className="btn-secondary w-full mt-4"
+                >
+                  {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (view === 'terms') {
+      return (
+        <div className="min-h-screen bg-bg text-text pb-20">
+          <nav className="landing-nav relative z-50">
+            <div className="container nav-inner flex justify-center">
+              <a href="#" onClick={(e) => { e.preventDefault(); navigateTo('/', 'landing'); }} className="flex items-center">
+                <Logo size="sm" />
+              </a>
+            </div>
+          </nav>
+          <div className="pt-24 mt-16 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+             <div className="bg-card border border-border rounded-3xl p-6 md:p-10 shadow-sm relative overflow-hidden">
+              <h2 className="text-3xl font-black mb-8 font-syne tracking-tight">{i18n.language === 'bn' ? 'শর্তাবলী' : 'Terms of Service'}</h2>
+              <div className="space-y-6">
+                    <div className="modal-highlight-box">
+                      {i18n.language === 'bn' 
+                        ? '(Trackoora-এর service ব্যবহার করলে আপনি এই Terms of Service-এ সম্মত হচ্ছেন। Beta signup করার মানে এই terms accept করা।)' 
+                        : '(By using Trackoora services, you agree to these Terms of Service. Signing up for Beta means accepting these terms.)'}
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3>{i18n.language === 'bn' ? '১. Trackoora কী প্রদান করে' : '1. What Trackoora Provides'}</h3>
+                      <div className="pl-4 space-y-2">
+                        <p className="text-sm text-text2">
+                          {i18n.language === 'bn' 
+                            ? 'Trackoora একটি SaaS (Software as a Service) platform যা বাংলাদেশের F-Commerce সেলারদের জন্য তৈরি। এটি প্রদান করে:' 
+                            : 'Trackoora is a SaaS (Software as a Service) platform built for F-Commerce sellers in Bangladesh. It provides:'}
+                        </p>
+                        <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
+                          <li>{i18n.language === 'bn' ? 'Meta Ads attribution — Inbox-এ confirm করা প্রতিটি অর্ডার Meta Algorithm-কে জানানো' : 'Meta Ads attribution — informing Meta Algorithm of every order confirmed in Inbox'}</li>
+                          <li>{i18n.language === 'bn' ? 'Conversation Card Dashboard — Ads থেকে আসা সব message এক জায়গায় track করা' : 'Conversation Card Dashboard — tracking all messages from Ads in one place'}</li>
+                          <li>{i18n.language === 'bn' ? 'Ad Performance Report — কোন Ads থেকে কত সেল এবং কত revenue' : 'Ad Performance Report — how many sales and how much revenue from which Ads'}</li>
+                          <li>{i18n.language === 'bn' ? 'Order Status Tracker ও Auto Confirmation Message' : 'Order Status Tracker & Auto Confirmation Message'}</li>
+                          <li>{i18n.language === 'bn' ? 'Telegram Daily Report' : 'Telegram Daily Report'}</li>
+                        </ul>
+                        <p className="text-sm text-text2 mt-2">
+                          {i18n.language === 'bn' 
+                            ? 'Trackoora Meta-র official API ব্যবহার করে। কোনো unofficial, restricted, বা Meta Policy-বিরুদ্ধ method ব্যবহার করা হয় না।' 
+                            : 'Trackoora uses Meta\'s official API. No unofficial, restricted, or Meta Policy-violating methods are used.'}
+                        </p>
+                      </div>
+
+                      <h3>{i18n.language === 'bn' ? '২. গ্রহণযোগ্য ব্যবহার' : '2. Acceptable Use'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'Trackoora শুধুমাত্র বৈধ F-Commerce ব্যবসার জন্য ব্যবহার করা যাবে।' : 'Trackoora can only be used for valid F-Commerce businesses.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Meta-র Platform Policy ও Community Standards লঙ্ঘন করে এমন কোনো কাজে ব্যবহার করা যাবে না।' : 'Cannot be used for any activity that violates Meta\'s Platform Policy & Community Standards.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Fake order, spam, misleading ads, বা fraudulent activity-র জন্য সম্পূর্ণ নিষিদ্ধ।' : 'Completely prohibited for fake orders, spam, misleading ads, or fraudulent activity.'}</li>
+                        <li>{i18n.language === 'bn' ? 'আপনার account অন্য কারো সাথে share বা বিক্রি করা যাবে না।' : 'Your account cannot be shared or sold to anyone else.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Platform-এর data অন্য কোনো tool বা service-এ export বা misuse করা যাবে না।' : 'Platform data cannot be exported to or misused in any other tool or service.'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৩. Beta Period শর্ত' : '3. Beta Period Terms'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'Beta period (প্রথম ৩০ দিন) সম্পূর্ণ বিনামূল্যে — কোনো payment card লাগবে না।' : 'Beta period (first 30 days) is completely free — no payment card required.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta-তে যোগ দিলে আপনি honest feedback দিতে সম্মত হচ্ছেন — এটাই আমাদের শর্ত।' : 'By joining Beta, you agree to provide honest feedback — this is our condition.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta period-এ service বা feature পরিবর্তন হতে পারে — আগে জানানো হবে।' : 'Services or features may change during the Beta period — notification will be provided beforehand.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta data product improvement-এ anonymized আকারে ব্যবহার হতে পারে।' : 'Beta data may be used in anonymized form for product improvement.'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৪. Subscription ও Payment' : '4. Subscription & Payment'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'Beta শেষে Starter Plan: ৳৪৯৯/মাস — bKash বা Nagad দিয়ে payment।' : 'Starter Plan after Beta: ৳499/month — payment via bKash or Nagad.'}</li>
+                        <li>{i18n.language === 'bn' ? 'মাসিক billing cycle — কোনো annual contract বা hidden charge নেই।' : 'Monthly billing cycle — no annual contract or hidden charges.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Payment না করলে grace period ৩ দিন — তারপর account suspend হবে।' : 'If payment is not made, grace period is 3 days — then account will be suspended.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Pricing পরিবর্তন হলে ১৪ দিন আগে notify করা হবে।' : 'Pricing changes will be notified 14 days in advance.'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৫. Cancellation ও Refund' : '5. Cancellation & Refund'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'যেকোনো সময় cancel করা যাবে — পরবর্তী billing cycle-এ charge হবে না।' : 'Can be cancelled at any time — no charge for the next billing cycle.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Cancel করলে current billing period শেষ পর্যন্ত access থাকবে।' : 'If cancelled, access remains until the end of the current billing period.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Cancel-এর ৩০ দিন পর সমস্ত data permanently মুছে ফেলা হবে।' : 'All data will be permanently deleted 30 days after cancellation.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Technical সমস্যার কারণে ২৪ ঘণ্টার বেশি service unavailable হলে আনুপাতিক credit দেওয়া হবে।' : 'Proportional credit will be given if service is unavailable for more than 24 hours due to technical issues.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta period-এ কোনো charge নেই, তাই refund প্রযোজ্য নয়।' : 'No charge during Beta period, so refund is not applicable.'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৬. Service Availability' : '6. Service Availability'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Trackoora ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে — planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
+                          : 'Trackoora aims for 99%+ uptime. However, temporary interruptions may occur due to — planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '৭. Intellectual Property' : '7. Intellectual Property'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Trackoora platform, এর design, code, content, এবং brand — এগুলো Trackoora-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
+                          : 'Trackoora platform, its design, code, content, and brand — these are the intellectual property of Trackoora. You get the right to use the service, not ownership. You own your business data.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '৮. Account Responsibility' : '8. Account Responsibility'}</h3>
+                      <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
+                        <li>{i18n.language === 'bn' ? 'আপনার account-এর নিরাপত্তা আপনার দায়িত্ব।' : 'Security of your account is your responsibility.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Account compromise সন্দেহ হলে তাৎক্ষণিক আমাদের জানান।' : 'Inform us immediately if account compromise is suspected.'}</li>
+                        <li>{i18n.language === 'bn' ? 'আপনার account থেকে করা সমস্ত activity-র জন্য আপনি দায়ী।' : 'You are responsible for all activity from your account.'}</li>
+                      </ul>
+
+                      <h3>{i18n.language === 'bn' ? '৯. Limitation of Liability' : '9. Limitation of Liability'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Trackoora Meta Ads-এর performance guarantee করে না — আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
+                          : 'Trackoora does not guarantee Meta Ads performance — we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '১০. Account Termination' : '10. Account Termination'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'নিম্নলিখিত কারণে Trackoora account বন্ধ করতে পারে — Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
+                          : 'Trackoora may close an account for the following reasons — Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
+                      </p>
+
+                      <h3>{i18n.language === 'bn' ? '১১. Terms পরিবর্তন' : '11. Terms Changes'}</h3>
+                      <p className="pl-4 text-sm text-text2">
+                        {i18n.language === 'bn' 
+                          ? 'Terms of Service পরিবর্তন হলে সকল সেলারকে Telegram বা email-এ আগে জানানো হবে। পরিবর্তনের ৭ দিন পরে effective হবে। পরিবর্তনের পরেও service ব্যবহার করলে new terms accept করা বলে গণ্য হবে।' 
+                          : 'Any changes to the Terms of Service will be notified to all sellers via Telegram or email beforehand. Changes will be effective after 7 days. Continued use of the service after changes will be considered as acceptance of the new terms.'}
+                      </p>
+                    </div>
+
+                    <div className="modal-last-updated">
+                      {i18n.language === 'bn' ? 'সর্বশেষ আপডেট: এপ্রিল ২০২৬ · Trackoora' : 'Last Updated: April 2026 · Trackoora'}
+                    </div>
+                  </div>
+              <div className="mt-8 pt-8 border-t border-border flex justify-end">
+                <button 
+                  onClick={() => navigateTo('/', 'landing')} 
+                  className="bg-bg3 text-text w-full py-3.5 rounded-xl font-bold border border-border hover:border-orange transition-all mt-4"
+                >
+                  {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <>
         <nav className="landing-nav">
+  
         <div className="container nav-inner">
           <div className="flex items-center gap-4">
             <div className="relative">
-              <button 
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all ${isMenuOpen ? 'bg-orange/10 text-orange' : 'hover:bg-bg2 text-text2'}`}
-              >
-                <Menu className="w-6 h-6" />
-              </button>
+              <input 
+                type="checkbox" 
+                id="checkbox" 
+                checked={isMenuOpen} 
+                onChange={(e) => setIsMenuOpen(e.target.checked)} 
+              />
+              <label htmlFor="checkbox" className="toggle">
+                <div className="bars" id="bar1"></div>
+                <div className="bars" id="bar2"></div>
+                <div className="bars" id="bar3"></div>
+              </label>
+              
               <AnimatePresence>
                 {isMenuOpen && (
                   <motion.div 
@@ -1258,23 +1571,6 @@ export default function App() {
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="absolute left-0 mt-2 w-56 bg-card border border-border rounded-2xl shadow-2xl z-50 py-3 overflow-hidden"
                   >
-                    <div className="px-3 mb-2">
-                      <div className="bg-bg2 p-1 rounded-xl flex items-center gap-1">
-                        <button 
-                          onClick={() => i18n.changeLanguage('en')}
-                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${i18n.language === 'en' ? 'bg-orange text-white shadow-lg shadow-orange/20' : 'text-text3 hover:text-text'}`}
-                        >
-                          English
-                        </button>
-                        <button 
-                          onClick={() => i18n.changeLanguage('bn')}
-                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${i18n.language === 'bn' ? 'bg-orange text-white shadow-lg shadow-orange/20' : 'text-text3 hover:text-text'}`}
-                        >
-                          বাংলা
-                        </button>
-                      </div>
-                    </div>
-                    
                     <div className="space-y-1">
                       <button onClick={() => scrollToSection('problem')} className="w-full text-left px-4 py-2.5 text-sm font-medium text-text2 hover:text-orange hover:bg-orange/5 transition-all flex items-center gap-3 group">
                         <div className="w-1.5 h-1.5 rounded-full bg-border group-hover:bg-orange transition-colors"></div>
@@ -1293,6 +1589,23 @@ export default function App() {
                         {i18n.language === 'bn' ? 'সাধারণ প্রশ্ন' : 'FAQ'}
                       </button>
                     </div>
+                    
+                    <div className="px-3 mt-2 border-t border-border pt-2">
+                      <div className="bg-bg2 p-1 rounded-xl flex items-center gap-1">
+                        <button 
+                          onClick={() => i18n.changeLanguage('en')}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${i18n.language === 'en' ? 'bg-orange text-white shadow-lg shadow-orange/20' : 'text-text3 hover:text-text'}`}
+                        >
+                          English
+                        </button>
+                        <button 
+                          onClick={() => i18n.changeLanguage('bn')}
+                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${i18n.language === 'bn' ? 'bg-orange text-white shadow-lg shadow-orange/20' : 'text-text3 hover:text-text'}`}
+                        >
+                          বাংলা
+                        </button>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -1308,7 +1621,7 @@ export default function App() {
 
           <div className="flex items-center gap-4">
             <button onClick={handleAuthClick} className="btn-primary nav-btn">
-              {i18n.language === 'bn' ? 'লগইন / সাইনআপ' : 'Login / Signup'}
+              {i18n.language === 'bn' ? '৩০ দিন ফ্রি ট্রায়াল নিন' : 'Get 30 days free'}
             </button>
           </div>
         </div>
@@ -1344,7 +1657,7 @@ export default function App() {
                 তাই Meta ভুল মানুষকে Ads দেখাচ্ছে — যারা message করে কিন্তু কেনে না। বাজেট বাড়ছে, সঠিক customer আসছে না।
                 <br /><br />
                 <span className="hero-highlight">
-                  Trackoora BD প্রতিটি Inbox অর্ডারকে সরাসরি Meta-তে পাঠায়। Meta শেখে কে আসলে কেনে — এবং তাদের কাছেই Ads যায়। একই বাজেটে সেল বাড়ে ২-৩ গুণ।
+                  Trackoora প্রতিটি Inbox অর্ডারকে সরাসরি Meta-তে পাঠায়। Meta শেখে কে আসলে কেনে — এবং তাদের কাছেই Ads যায়। একই বাজেটে সেল বাড়ে ২-৩ গুণ।
                 </span>
               </>
             ) : (
@@ -1352,7 +1665,7 @@ export default function App() {
                 That's why Meta shows ads to the wrong people — those who message but don't buy. Budget increases, but the right customers don't come.
                 <br /><br />
                 <span className="hero-highlight">
-                  Trackoora BD sends every Inbox order directly to Meta. Meta learns who actually buys — and shows ads to them. Sales increase 2-3x for the same budget.
+                  Trackoora sends every Inbox order directly to Meta. Meta learns who actually buys — and shows ads to them. Sales increase 2-3x for the same budget.
                 </span>
               </>
             )}
@@ -1538,7 +1851,7 @@ export default function App() {
               <p>{i18n.language === 'bn' ? 'এটাই সবচেয়ে স্বাভাবিক প্রশ্ন। এবং উত্তরটা আপনাকে অবাক করবে।' : 'This is the most natural question. And the answer will surprise you.'}</p>
             </div>
             <div className="objection-body">
-              <p>{i18n.language === 'bn' ? 'Pixel লাগে website-এর জন্য। আপনার business Messenger-এ — তাই Pixel কোনোদিনও আপনার কাজে আসতো না। Trackoora BD সম্পূর্ণ আলাদাভাবে কাজ করে — শুধু F-Commerce-এর জন্য, শুধু Messenger-এর জন্য।' : 'Pixel is for websites. Your business is on Messenger — so Pixel would never work for you. Trackoora BD works completely differently — specifically for F-Commerce and Messenger.'}</p>
+              <p>{i18n.language === 'bn' ? 'Pixel লাগে website-এর জন্য। আপনার business Messenger-এ — তাই Pixel কোনোদিনও আপনার কাজে আসতো না। Trackoora সম্পূর্ণ আলাদাভাবে কাজ করে — শুধু F-Commerce-এর জন্য, শুধু Messenger-এর জন্য।' : 'Pixel is for websites. Your business is on Messenger — so Pixel would never work for you. Trackoora works completely differently — specifically for F-Commerce and Messenger.'}</p>
               
               <div className="flow-box">
                 <div className="flow-title">{i18n.language === 'bn' ? 'প্রতিটি অর্ডারে যা হয়' : 'What happens with every order'}</div>
@@ -1547,20 +1860,20 @@ export default function App() {
                     <div className="flow-connector"><div className="flow-dot animate-floating"><MousePointerClick className="w-4 h-4 text-cyan" /></div><div className="flow-line"></div></div>
                     <div className="flow-step-text">
                       <strong>{i18n.language === 'bn' ? 'কেউ আপনার Ads দেখে "Message" ক্লিক করল' : 'Someone clicks "Message" on your Ad'}</strong>
-                      <span>{i18n.language === 'bn' ? 'Meta তখনই Trackoora BD-কে জানায় — কে এলো, কোন Ads থেকে এলো' : 'Meta immediately notifies Trackoora BD — who came, from which Ad'}</span>
+                      <span>{i18n.language === 'bn' ? 'Meta তখনই Trackoora-কে জানায় — কে এলো, কোন Ads থেকে এলো' : 'Meta immediately notifies Trackoora — who came, from which Ad'}</span>
                     </div>
                   </div>
                   <div className="flow-step">
                     <div className="flow-connector"><div className="flow-dot animate-floating" style={{animationDelay: '0.5s'}}><MessageCircle className="w-4 h-4 text-cyan" /></div><div className="flow-line"></div></div>
                     <div className="flow-step-text">
                       <strong>{i18n.language === 'bn' ? 'আপনি Inbox-এ কথা বলে অর্ডার নিলেন' : 'You take the order in Inbox'}</strong>
-                      <span>{i18n.language === 'bn' ? 'Trackoora BD Dashboard-এ সেই customer-এর card তৈরি হয়ে আছে' : 'A card for that customer is already created in Trackoora BD'}</span>
+                      <span>{i18n.language === 'bn' ? 'Trackoora Dashboard-এ সেই customer-এর card তৈরি হয়ে আছে' : 'A card for that customer is already created in Trackoora'}</span>
                     </div>
                   </div>
                   <div className="flow-step">
                     <div className="flow-connector"><div className="flow-dot animate-floating" style={{animationDelay: '1s'}}><ShoppingBag className="w-4 h-4 text-cyan" /></div><div className="flow-line"></div></div>
                     <div className="flow-step-text">
-                      <strong>{i18n.language === 'bn' ? 'Trackoora BD-তে "অর্ডার হয়েছে" ক্লিক করলেন' : 'You click "Order Confirmed" in Trackoora BD'}</strong>
+                      <strong>{i18n.language === 'bn' ? 'Trackoora-তে "অর্ডার হয়েছে" ক্লিক করলেন' : 'You click "Order Confirmed" in Trackoora'}</strong>
                       <span>{i18n.language === 'bn' ? 'Meta জানলো — "এই মানুষটা কিনেছে"' : 'Meta knows — "This person bought something"'}</span>
                     </div>
                   </div>
@@ -1590,7 +1903,7 @@ export default function App() {
       >
         <div className="container">
           <span className="section-label">{i18n.language === 'bn' ? 'আগে ও পরে' : 'Before & After'}</span>
-          <h2 className="section-title">{i18n.language === 'bn' ? <>Trackoora BD ব্যবহার করলে<br/>কী পরিবর্তন আসতে পারে</> : <>What changes can happen<br/>using Trackoora BD</>}</h2>
+          <h2 className="section-title">{i18n.language === 'bn' ? <>Trackoora ব্যবহার করলে<br/>কী পরিবর্তন আসতে পারে</> : <>What changes can happen<br/>using Trackoora</>}</h2>
           <p className="section-sub">{i18n.language === 'bn' ? 'এই পরিবর্তনটা আসে একটাই কারণে — Meta এখন জানে কে আসলে কেনে। তারপর সে নিজেই সঠিক কাস্টমার খুঁজে নেয়।' : 'This change happens for one reason — Meta now knows who actually buys. Then it finds the right customers itself.'}</p>
 
           <motion.div 
@@ -1604,12 +1917,12 @@ export default function App() {
               <div className="proof-avatar">👗</div>
               <div className="proof-meta">
                 <strong>{i18n.language === 'bn' ? 'একজন Fashion F-Commerce সেলার — আগে ও পরে' : 'A Fashion F-Commerce Seller — Before & After'}</strong>
-                <span>{i18n.language === 'bn' ? 'Trackoora BD ব্যবহারের আগে এবং কয়েক মাস পরে' : 'Before and a few months after using Trackoora BD'}</span>
+                <span>{i18n.language === 'bn' ? 'Trackoora ব্যবহারের আগে এবং কয়েক মাস পরে' : 'Before and a few months after using Trackoora'}</span>
               </div>
             </div>
             <div className="proof-body">
               <div className="proof-col">
-                <div className="proof-col-label bad">{i18n.language === 'bn' ? '❌ Trackoora BD ব্যবহারের আগে' : '❌ Before Trackoora BD'}</div>
+                <div className="proof-col-label bad">{i18n.language === 'bn' ? '❌ Trackoora ব্যবহারের আগে' : '❌ Before Trackoora'}</div>
                 <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'Ads-এ টাকা যাচ্ছে, কিন্তু Meta জানে না কে কিনছে' : 'Money going to Ads, but Meta doesn\'t know who buys'}</div>
                 <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? '১০০ মেসেজ আসছে, কিনছে ১০-১৫ জন — বাকিদের পেছনে টাকা নষ্ট' : '100 messages coming, 10-15 buying — money wasted on the rest'}</div>
                 <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'COD ফেরত আসছে — কিন্তু কোন Ads থেকে এই buyers আসছে জানা নেই' : 'COD returns coming — but don\'t know which Ads these buyers came from'}</div>
@@ -1618,7 +1931,7 @@ export default function App() {
                 <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'Real profit কত — জানার কোনো উপায় নেই' : 'Real profit — no way to know'}</div>
               </div>
               <div className="proof-col">
-                <div className="proof-col-label good">{i18n.language === 'bn' ? '✅ Trackoora BD ব্যবহারের পরে' : '✅ After Trackoora BD'}</div>
+                <div className="proof-col-label good">{i18n.language === 'bn' ? '✅ Trackoora ব্যবহারের পরে' : '✅ After Trackoora'}</div>
                 <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'প্রতিটি অর্ডার confirm করলে Meta জানে — এই মানুষটা কিনেছে' : 'Confirming every order lets Meta know — this person bought'}</div>
                 <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'Algorithm ধীরে ধীরে সেই ধরনের মানুষকেই Ads দেখাতে শুরু করে' : 'Algorithm slowly starts showing ads to similar people'}</div>
                 <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'কোন Ads কাজ করছে, কোনটা টাকা নষ্ট করছে — Dashboard-এ দেখুন' : 'See which Ads work and which waste money in the Dashboard'}</div>
@@ -1662,7 +1975,7 @@ export default function App() {
             >
               <div className="step-num">১</div>
               <h3>{i18n.language === 'bn' ? 'Facebook Page কানেক্ট করুন' : 'Connect Facebook Page'}</h3>
-              <p>{i18n.language === 'bn' ? 'Trackoora BD-এ sign up করুন, Facebook Page লিঙ্ক করুন। Guided setup — মাত্র ৫ মিনিট। একবারই করতে হবে।' : 'Sign up for Trackoora BD, link your Facebook Page. Guided setup — just 5 minutes. Only needs to be done once.'}</p>
+              <p>{i18n.language === 'bn' ? 'Trackoora-এ sign up করুন, Facebook Page লিঙ্ক করুন। Guided setup — মাত্র ৫ মিনিট। একবারই করতে হবে।' : 'Sign up for Trackoora, link your Facebook Page. Guided setup — just 5 minutes. Only needs to be done once.'}</p>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 50 }}
@@ -1673,7 +1986,7 @@ export default function App() {
             >
               <div className="step-num">২</div>
               <h3>{i18n.language === 'bn' ? 'Ads থেকে মেসেজ এলে Card আসে' : 'Card comes when Ad message arrives'}</h3>
-              <p>{i18n.language === 'bn' ? 'কেউ Ads থেকে message করলে Trackoora BD automatically সেই customer ও কোন Ads থেকে এলো সেই তথ্য সহ একটি card তৈরি করে।' : 'When someone messages from an Ad, Trackoora BD automatically creates a card with customer info and Ad source.'}</p>
+              <p>{i18n.language === 'bn' ? 'কেউ Ads থেকে message করলে Trackoora automatically সেই customer ও কোন Ads থেকে এলো সেই তথ্য সহ একটি card তৈরি করে।' : 'When someone messages from an Ad, Trackoora automatically creates a card with customer info and Ad source.'}</p>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: 50 }}
@@ -1684,7 +1997,7 @@ export default function App() {
             >
               <div className="step-num">৩</div>
               <h3>{i18n.language === 'bn' ? '"অর্ডার হয়েছে" ক্লিক করুন' : 'Click "Order Confirmed"'}</h3>
-              <p>{i18n.language === 'bn' ? '৩০ সেকেন্ডে অর্ডার confirm করুন। Trackoora BD তখনই Meta-কে signal পাঠায়, customer-কে confirmation message যায়, অর্ডার record হয়।' : 'Confirm order in 30 seconds. Trackoora BD immediately sends a signal to Meta, a confirmation message goes to the customer, and the order is recorded.'}</p>
+              <p>{i18n.language === 'bn' ? '৩০ সেকেন্ডে অর্ডার confirm করুন। Trackoora তখনই Meta-কে signal পাঠায়, customer-কে confirmation message যায়, অর্ডার record হয়।' : 'Confirm order in 30 seconds. Trackoora immediately sends a signal to Meta, a confirmation message goes to the customer, and the order is recorded.'}</p>
             </motion.div>
           </div>
         </div>
@@ -1743,7 +2056,7 @@ export default function App() {
       >
         <div className="container">
           <span className="section-label">{i18n.language === 'bn' ? 'কার জন্য?' : 'Who is this for?'}</span>
-          <h2 className="section-title">{i18n.language === 'bn' ? 'Trackoora BD কার জন্য তৈরি?' : 'Who is Trackoora BD for?'}</h2>
+          <h2 className="section-title">{i18n.language === 'bn' ? 'Trackoora কার জন্য তৈরি?' : 'Who is Trackoora for?'}</h2>
           
           <div className="who-grid">
             {[
@@ -1800,7 +2113,7 @@ export default function App() {
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? '১টি Facebook Page · মাসে ১০০ অর্ডার' : '1 Facebook Page · 100 Orders/Month'}</li>
               </ul>
               <button onClick={handleAuthClick} className="btn-primary w-full">
-                {i18n.language === 'bn' ? 'শুরু করুন →' : 'Get Started →'}
+                {i18n.language === 'bn' ? 'শুরু করুন →' : 'Get 30 days Free →'}
               </button>
             </div>
 
@@ -1836,7 +2149,7 @@ export default function App() {
             {[
               {
                 q: i18n.language === 'bn' ? 'Website বা Pixel ছাড়া কি সত্যিই Tracking হয়?' : 'Is tracking really possible without a website or pixel?',
-                a: i18n.language === 'bn' ? 'হ্যাঁ। Trackoora BD Pixel ব্যবহার করে না — কারণ আপনার business website-এ না, Messenger-এ। আমরা Meta-র নিজস্ব Messenger system ব্যবহার করি।' : "Yes. Trackoora BD doesn't use Pixel because your business is on Messenger, not a website. We use Meta's own Messenger system."
+                a: i18n.language === 'bn' ? 'হ্যাঁ। Trackoora Pixel ব্যবহার করে না — কারণ আপনার business website-এ না, Messenger-এ। আমরা Meta-র নিজস্ব Messenger system ব্যবহার করি।' : "Yes. Trackoora doesn't use Pixel because your business is on Messenger, not a website. We use Meta's own Messenger system."
               },
               {
                 q: i18n.language === 'bn' ? 'আমি শুধু Facebook-এ সেল করি — এটা কি আমার জন্য?' : 'I only sell on Facebook — is this for me?',
@@ -1875,7 +2188,7 @@ export default function App() {
         <div className="cta-orb"></div>
         <div className="container">
           <h2>{i18n.language === 'bn' ? 'আপনার Ads-কে অন্ধের মতো চালানো বন্ধ করুন' : 'Stop running your Ads blindly'}</h2>
-          <p>{i18n.language === 'bn' ? 'Trackoora BD-এর মাধ্যমে Meta-কে জানান আপনার আসল কাস্টমার কারা। আজই শুরু করুন আপনার ৩০ দিনের ফ্রি ট্রায়াল।' : 'Tell Meta who your real customers are with Trackoora BD. Start your 30-day free trial today.'}</p>
+          <p>{i18n.language === 'bn' ? 'Trackoora-এর মাধ্যমে Meta-কে জানান আপনার আসল কাস্টমার কারা। আজই শুরু করুন আপনার ৩০ দিনের ফ্রি ট্রায়াল।' : 'Tell Meta who your real customers are with Trackoora. Start your 30-day free trial today.'}</p>
           
           <button onClick={handleAuthClick} className="btn-primary large">
             {i18n.language === 'bn' ? 'ফ্রি ট্রায়াল শুরু করুন' : 'Start Free Trial'}
@@ -1901,13 +2214,13 @@ export default function App() {
             </div>
             <div className="footer-links">
               <h5>{i18n.language === 'bn' ? 'লিগ্যাল' : 'Legal'}</h5>
-              <button onClick={() => setActiveModal('privacy')} className="block text-text2 text-sm py-1 hover:text-text text-left w-full">Privacy Policy</button>
-              <button onClick={() => setActiveModal('terms')} className="block text-text2 text-sm py-1 hover:text-text text-left w-full">Terms of Service</button>
+              <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigateTo("/privacy-policy", "privacy"); }} className="block text-text2 text-sm py-1 hover:text-text text-left w-full">Privacy Policy</a>
+              <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); navigateTo("/terms-of-service", "terms"); }} className="block text-text2 text-sm py-1 hover:text-text text-left w-full">Terms of Service</a>
             </div>
           </div>
           <div className="footer-bottom">
-            <p>© ২০২৬ Trackoora BD · সর্বস্বত্ব সংরক্ষিত</p>
-            <p>Developed with ❤️ Trackoora BD Team 🇧🇩</p>
+            <p>© ২০২৬ Trackoora · সর্বস্বত্ব সংরক্ষিত</p>
+            <p>Developed with ❤️ Trackoora Team 🇧🇩</p>
           </div>
         </div>
       </footer>
@@ -2052,8 +2365,8 @@ export default function App() {
                   <div className="space-y-6">
                     <div className="modal-highlight-box">
                       {i18n.language === 'bn' 
-                        ? '(এই Privacy Policy Trackoora BD-এর সকল সেলার ও তাদের customer-দের ক্ষেত্রে প্রযোজ্য। এটি বাংলাদেশের Cyber Security Act 2023 অনুসারে প্রণীত।)' 
-                        : '(This Privacy Policy applies to all Trackoora BD sellers and their customers. It is formulated in accordance with the Cyber Security Act 2023 of Bangladesh.)'}
+                        ? '(এই Privacy Policy Trackoora-এর সকল সেলার ও তাদের customer-দের ক্ষেত্রে প্রযোজ্য। এটি বাংলাদেশের Cyber Security Act 2023 অনুসারে প্রণীত।)' 
+                        : '(This Privacy Policy applies to all Trackoora sellers and their customers. It is formulated in accordance with the Cyber Security Act 2023 of Bangladesh.)'}
                     </div>
 
                     <div className="space-y-4">
@@ -2083,7 +2396,7 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '২. কেন এই তথ্য সংগ্রহ করা হয়' : '2. Why this information is collected'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Trackoora BD-এর service প্রদান — এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora BD service — this is the sole purpose'}</li>
+                        <li>{i18n.language === 'bn' ? 'Trackoora-এর service প্রদান — এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora service — this is the sole purpose'}</li>
                         <li>{i18n.language === 'bn' ? 'Meta Algorithm-এ sale signal ও — সেলারের Ads performance উন্নত করতে' : 'Sale signals to Meta Algorithm — to improve seller Ads performance'}</li>
                         <li>{i18n.language === 'bn' ? 'Ad performance dashboard তৈরি করতে Meta Ads from data pull করা' : 'Pulling data from Meta Ads to create Ad performance dashboard'}</li>
                         <li>{i18n.language === 'bn' ? 'Telegram daily report পাঠানো' : 'Sending Telegram daily reports'}</li>
@@ -2120,8 +2433,8 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৬. Cookies ও Anonymous Data' : '6. Cookies & Anonymous Data'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora BD landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় — আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data — product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
-                          : 'Only essential cookies are used on the Trackoora BD landing page — to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
+                          ? 'Trackoora landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় — আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data — product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
+                          : 'Only essential cookies are used on the Trackoora landing page — to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৭. আপনার অধিকার' : '7. Your Rights'}</h3>
@@ -2136,8 +2449,8 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৮. বাংলাদেশ Cyber Security Act 2023' : '8. Bangladesh Cyber Security Act 2023'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora BD বাংলাদেশের Cyber Security Act 2023-এর আওতায় পরিচালিত। আমাদের data handling practices এই আইন মেনে চলে।' 
-                          : 'Trackoora BD is operated under the Cyber Security Act 2023 of Bangladesh. Our data handling practices comply with this law.'}
+                          ? 'Trackoora বাংলাদেশের Cyber Security Act 2023-এর আওতায় পরিচালিত। আমাদের data handling practices এই আইন মেনে চলে।' 
+                          : 'Trackoora is operated under the Cyber Security Act 2023 of Bangladesh. Our data handling practices comply with this law.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৯. Policy পরিবর্তন' : '9. Policy Changes'}</h3>
@@ -2156,7 +2469,7 @@ export default function App() {
                     </div>
 
                     <div className="modal-last-updated">
-                      {i18n.language === 'bn' ? 'সর্বশেষ আপডেট: এপ্রিল ২০২৬ · Trackoora BD' : 'Last Updated: April 2026 · Trackoora BD'}
+                      {i18n.language === 'bn' ? 'সর্বশেষ আপডেট: এপ্রিল ২০২৬ · Trackoora' : 'Last Updated: April 2026 · Trackoora'}
                     </div>
                   </div>
                 )}
@@ -2165,17 +2478,17 @@ export default function App() {
                   <div className="space-y-6">
                     <div className="modal-highlight-box">
                       {i18n.language === 'bn' 
-                        ? '(Trackoora BD-এর service ব্যবহার করলে আপনি এই Terms of Service-এ সম্মত হচ্ছেন। Beta signup করার মানে এই terms accept করা।)' 
-                        : '(By using Trackoora BD services, you agree to these Terms of Service. Signing up for Beta means accepting these terms.)'}
+                        ? '(Trackoora-এর service ব্যবহার করলে আপনি এই Terms of Service-এ সম্মত হচ্ছেন। Beta signup করার মানে এই terms accept করা।)' 
+                        : '(By using Trackoora services, you agree to these Terms of Service. Signing up for Beta means accepting these terms.)'}
                     </div>
 
                     <div className="space-y-4">
-                      <h3>{i18n.language === 'bn' ? '১. Trackoora BD কী প্রদান করে' : '1. What Trackoora BD Provides'}</h3>
+                      <h3>{i18n.language === 'bn' ? '১. Trackoora কী প্রদান করে' : '1. What Trackoora Provides'}</h3>
                       <div className="pl-4 space-y-2">
                         <p className="text-sm text-text2">
                           {i18n.language === 'bn' 
-                            ? 'Trackoora BD একটি SaaS (Software as a Service) platform যা বাংলাদেশের F-Commerce সেলারদের জন্য তৈরি। এটি প্রদান করে:' 
-                            : 'Trackoora BD is a SaaS (Software as a Service) platform built for F-Commerce sellers in Bangladesh. It provides:'}
+                            ? 'Trackoora একটি SaaS (Software as a Service) platform যা বাংলাদেশের F-Commerce সেলারদের জন্য তৈরি। এটি প্রদান করে:' 
+                            : 'Trackoora is a SaaS (Software as a Service) platform built for F-Commerce sellers in Bangladesh. It provides:'}
                         </p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
                           <li>{i18n.language === 'bn' ? 'Meta Ads attribution — Inbox-এ confirm করা প্রতিটি অর্ডার Meta Algorithm-কে জানানো' : 'Meta Ads attribution — informing Meta Algorithm of every order confirmed in Inbox'}</li>
@@ -2186,14 +2499,14 @@ export default function App() {
                         </ul>
                         <p className="text-sm text-text2 mt-2">
                           {i18n.language === 'bn' 
-                            ? 'Trackoora BD Meta-র official API ব্যবহার করে। কোনো unofficial, restricted, বা Meta Policy-বিরুদ্ধ method ব্যবহার করা হয় না।' 
-                            : 'Trackoora BD uses Meta\'s official API. No unofficial, restricted, or Meta Policy-violating methods are used.'}
+                            ? 'Trackoora Meta-র official API ব্যবহার করে। কোনো unofficial, restricted, বা Meta Policy-বিরুদ্ধ method ব্যবহার করা হয় না।' 
+                            : 'Trackoora uses Meta\'s official API. No unofficial, restricted, or Meta Policy-violating methods are used.'}
                         </p>
                       </div>
 
                       <h3>{i18n.language === 'bn' ? '২. গ্রহণযোগ্য ব্যবহার' : '2. Acceptable Use'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Trackoora BD শুধুমাত্র বৈধ F-Commerce ব্যবসার জন্য ব্যবহার করা যাবে।' : 'Trackoora BD can only be used for valid F-Commerce businesses.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Trackoora শুধুমাত্র বৈধ F-Commerce ব্যবসার জন্য ব্যবহার করা যাবে।' : 'Trackoora can only be used for valid F-Commerce businesses.'}</li>
                         <li>{i18n.language === 'bn' ? 'Meta-র Platform Policy ও Community Standards লঙ্ঘন করে এমন কোনো কাজে ব্যবহার করা যাবে না।' : 'Cannot be used for any activity that violates Meta\'s Platform Policy & Community Standards.'}</li>
                         <li>{i18n.language === 'bn' ? 'Fake order, spam, misleading ads, বা fraudulent activity-র জন্য সম্পূর্ণ নিষিদ্ধ।' : 'Completely prohibited for fake orders, spam, misleading ads, or fraudulent activity.'}</li>
                         <li>{i18n.language === 'bn' ? 'আপনার account অন্য কারো সাথে share বা বিক্রি করা যাবে না।' : 'Your account cannot be shared or sold to anyone else.'}</li>
@@ -2228,15 +2541,15 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৬. Service Availability' : '6. Service Availability'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora BD ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে — planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
-                          : 'Trackoora BD aims for 99%+ uptime. However, temporary interruptions may occur due to — planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
+                          ? 'Trackoora ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে — planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
+                          : 'Trackoora aims for 99%+ uptime. However, temporary interruptions may occur due to — planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৭. Intellectual Property' : '7. Intellectual Property'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora BD platform, এর design, code, content, এবং brand — এগুলো Trackoora BD-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
-                          : 'Trackoora BD platform, its design, code, content, and brand — these are the intellectual property of Trackoora BD. You get the right to use the service, not ownership. You own your business data.'}
+                          ? 'Trackoora platform, এর design, code, content, এবং brand — এগুলো Trackoora-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
+                          : 'Trackoora platform, its design, code, content, and brand — these are the intellectual property of Trackoora. You get the right to use the service, not ownership. You own your business data.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৮. Account Responsibility' : '8. Account Responsibility'}</h3>
@@ -2249,15 +2562,15 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৯. Limitation of Liability' : '9. Limitation of Liability'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora BD Meta Ads-এর performance guarantee করে না — আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora BD দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
-                          : 'Trackoora BD does not guarantee Meta Ads performance — we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora BD is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
+                          ? 'Trackoora Meta Ads-এর performance guarantee করে না — আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
+                          : 'Trackoora does not guarantee Meta Ads performance — we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '১০. Account Termination' : '10. Account Termination'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'নিম্নলিখিত কারণে Trackoora BD account বন্ধ করতে পারে — Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
-                          : 'Trackoora BD may close an account for the following reasons — Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
+                          ? 'নিম্নলিখিত কারণে Trackoora account বন্ধ করতে পারে — Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
+                          : 'Trackoora may close an account for the following reasons — Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '১১. Terms পরিবর্তন' : '11. Terms Changes'}</h3>
@@ -2269,7 +2582,7 @@ export default function App() {
                     </div>
 
                     <div className="modal-last-updated">
-                      {i18n.language === 'bn' ? 'সর্বশেষ আপডেট: এপ্রিল ২০২৬ · Trackoora BD' : 'Last Updated: April 2026 · Trackoora BD'}
+                      {i18n.language === 'bn' ? 'সর্বশেষ আপডেট: এপ্রিল ২০২৬ · Trackoora' : 'Last Updated: April 2026 · Trackoora'}
                     </div>
                   </div>
                 )}
