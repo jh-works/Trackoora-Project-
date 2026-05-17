@@ -46,6 +46,7 @@ import {
   Mail,
   Menu,
   User,
+  Users,
   Sun,
   Moon
 } from 'lucide-react';
@@ -90,6 +91,7 @@ export default function App() {
   }, []);
 
   const navigateTo = (path, newView) => {
+    setPreviousView(view);
     window.history.pushState({}, '', path);
     setView(newView);
     setActiveModal(null);
@@ -128,6 +130,7 @@ export default function App() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [forgotPasswordMethod, setForgotPasswordMethod] = useState<'email' | 'phone'>('email');
   const [forgotPasswordStep, setForgotPasswordStep] = useState<'input' | 'otp' | 'success'>('input');
+  const [previousView, setPreviousView] = useState<string | null>(null);
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
     const saved = localStorage.getItem('theme');
@@ -436,26 +439,25 @@ export default function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('demo_user');
     setUser(null);
-    resetAuthForm('login');
     setView('landing');
   };
 
   const renderView = () => {
     if (view === 'onboarding') {
       return (
-      <div className="min-h-screen bg-bg flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="hero-orb-l" />
-        <div className="hero-grid" />
+      <div className="auth-container">
+        <div className="hero-orb-l opacity-50" />
+        <div className="hero-grid opacity-10" />
         
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-2xl bg-card border border-border2 rounded-[24px] p-8 md:p-12 relative z-10 shadow-2xl"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-5xl px-6 relative z-10 py-10"
         >
-          <div className="flex justify-between items-center mb-10">
-            <Logo size="sm" theme={theme} />
-            <div className="flex flex-col items-end gap-2">
-              <div className="flex gap-1.5">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-16">
+            <Logo size="lg" theme={theme} />
+            <div className="flex flex-col items-center md:items-end gap-3">
+              <div className="flex gap-2">
                 {['plan', 'survey', 'profile', 'facebook', 'telegram'].map((s, idx) => {
                   const currentSection = ['subscription_selection', 'payment_placeholder'].includes(onboardingStep) ? 'plan'
                     : ['survey_source', 'survey_business', 'survey_thanks'].includes(onboardingStep) ? 'survey'
@@ -466,144 +468,217 @@ export default function App() {
                   return (
                   <div 
                     key={s}
-                    className={`h-1.5 w-8 rounded-full transition-all duration-500 ${
-                      idx <= sectionIndex ? 'bg-orange' : 'bg-bg3'
+                    className={`h-2 w-10 sm:w-16 rounded-full transition-all duration-700 ${
+                      idx <= sectionIndex ? 'bg-orange shadow-[0_0_10px_rgba(255,107,0,0.5)]' : 'bg-bg3 border border-border/10'
                     }`}
                   />
                   );
                 })}
               </div>
-              <span className="text-[10px] font-bold text-text3 uppercase tracking-widest bg-bg3/50 px-2 py-0.5 rounded-full border border-border/10">
-                {onboardingStep === 'subscription_selection' ? 'Start' : onboardingStep === 'setup_complete' ? 'Done' : 'Setup'}
+              <span className="text-[11px] font-black text-text3 uppercase tracking-[3px] bg-bg3/50 px-4 py-1 rounded-full border border-border/10 backdrop-blur-sm">
+                {onboardingStep === 'subscription_selection' ? (i18n.language === 'bn' ? 'শুরু করুন' : 'Start') : onboardingStep === 'setup_complete' ? (i18n.language === 'bn' ? 'সম্পন্ন' : 'Done') : (i18n.language === 'bn' ? 'সেটআপ' : 'Setup')}
               </span>
             </div>
           </div>
 
           <AnimatePresence mode="wait">
             {onboardingStep === 'subscription_selection' && (
-              <motion.div key="subscription" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <h2 className="text-3xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'আপনার প্ল্যান বেছে নিন' : 'Choose Your Plan'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'কীভাবে শুরু করতে চান তা নির্বাচন করুন।' : 'Select how you want to start with Trackoora.'}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  <div className="bg-bg3 border border-border p-6 rounded-2xl hover:border-orange cursor-pointer transition-all flex flex-col items-center" onClick={() => setOnboardingStep('survey_source')}>
-                    <h3 className="text-xl font-bold text-text mb-2">{i18n.language === 'bn' ? '৩০ দিনের ফ্রি ট্রায়াল' : '30-Day Free Trial'}</h3>
-                    <p className="text-text2 text-sm mb-4">{i18n.language === 'bn' ? 'সব ফিচার বিনামূল্যে ব্যবহার করুন।' : 'Explore all features for free.'}</p>
-                    <button className="btn-secondary w-full" onClick={() => setOnboardingStep('survey_source')}>{i18n.language === 'bn' ? 'ট্রায়াল শুরু করুন' : 'Start Trial'}</button>
+              <motion.div key="subscription" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-sm mx-auto">
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-black text-text mb-2 tracking-tight">
+                    {i18n.language === 'bn' ? 'স্টার্টার প্ল্যান বেছে নিন' : 'Choose Starter Plan'}
+                  </h2>
+                  <p className="text-xs text-text3 font-medium">
+                    {i18n.language === 'bn' ? '৩০ দিনের ফ্রি ট্রায়াল শেষ হলে চার্জ করা হবে।' : 'Trial ends in 30 days, then subscription begins.'}
+                  </p>
+                </div>
+                
+                <div className="bg-card border-2 border-orange rounded-[32px] p-8 shadow-xl shadow-orange/10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-orange text-white px-4 py-1 text-[10px] font-black uppercase tracking-tighter rounded-bl-2xl">Recommended</div>
+                  
+                  <div className="flex flex-col items-center mb-6">
+                    <div className="text-[10px] font-black text-orange uppercase tracking-widest mb-1">Starter</div>
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-4xl font-black text-orange tabular-nums">৳৪৯৯</span>
+                      <span className="text-sm font-bold text-text2">/{i18n.language === 'bn' ? 'মাস' : 'mo'}</span>
+                    </div>
+                    <div className="inline-block mt-2 bg-green/10 text-green px-3 py-0.5 rounded-full text-[11px] font-black border border-green/20">
+                      {i18n.language === 'bn' ? '৩০ দিন ফ্রি ট্রায়াল' : '30 Days Free Trial'}
+                    </div>
                   </div>
-                  <div className="bg-orange/10 border border-orange/30 p-6 rounded-2xl hover:border-orange cursor-pointer transition-all flex flex-col items-center group" onClick={() => setOnboardingStep('payment_placeholder')}>
-                    <h3 className="text-xl font-bold text-orange mb-2">{i18n.language === 'bn' ? 'পেইড প্ল্যান' : 'Paid Plan'}</h3>
-                    <p className="text-text2 text-sm mb-4">{i18n.language === 'bn' ? 'সর্বোচ্চ লিমিট আনলক করুন।' : 'Unlock maximum limits and growth.'}</p>
-                    <button className="btn-primary w-full">{i18n.language === 'bn' ? 'প্ল্যান বেছে নিন' : 'Select Plan'}</button>
+
+                  <ul className="space-y-3 mb-8">
+                    {[
+                      { bn: 'Meta Signal (Server-side)', en: 'Meta Signal (Server-side)' },
+                      { bn: 'Attribution Dashboard', en: 'Attribution Dashboard' },
+                      { bn: 'Conversation Cards', en: 'Conversation Cards' },
+                      { bn: 'Auto Confirm Message', en: 'Auto Confirm Message' },
+                      { bn: 'Order Status Tracker', en: 'Order Status Tracker' },
+                      { bn: 'Telegram Daily Report', en: 'Telegram Daily Report' },
+                      { bn: '১টি Page · ১০০ অর্ডার', en: '1 Page · 100 Orders/Mo' }
+                    ].map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-3 text-[11px] text-text font-medium border-b border-border/5 pb-2">
+                        <div className="w-5 h-5 rounded-full bg-green/10 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-3 h-3 text-green" />
+                        </div>
+                        <span>{i18n.language === 'bn' ? feature.bn : feature.en}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-auto relative z-10">
+                    <button 
+                      onClick={() => setOnboardingStep('survey_source')}
+                      className="btn-primary w-full py-4 text-base font-black shadow-lg btn-glow rounded-full"
+                    >
+                      {i18n.language === 'bn' ? 'ফ্রি ট্রায়াল শুরু করুন' : 'Start Free Trial'}
+                    </button>
                   </div>
                 </div>
               </motion.div>
             )}
 
             {onboardingStep === 'payment_placeholder' && (
-              <motion.div key="payment" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'চেকআউট' : 'Checkout'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'প্রিমিয়াম প্ল্যান অ্যাক্টিভেট করতে আপনার পেমেন্ট তথ্য দিন।' : 'Provide your payment details to activate the premium plan.'}</p>
-                <div className="bg-bg3 border border-border rounded-xl p-4 mb-8 text-left">
-                  <div className="animate-pulse space-y-4">
-                    <div className="h-4 bg-bg2 rounded w-3/4"></div>
-                    <div className="h-10 bg-bg2 rounded w-full"></div>
+              <motion.div key="payment" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="text-center max-w-2xl mx-auto bg-card border border-border p-10 rounded-[48px] shadow-2xl">
+                <h2 className="text-3xl font-black text-text mb-4 tracking-tight">{i18n.language === 'bn' ? 'চেকআউট' : 'Checkout'}</h2>
+                <p className="text-text2 mb-10 font-medium">{i18n.language === 'bn' ? 'প্রিমিয়াম প্ল্যান অ্যাক্টিভেট করতে আপনার পেমেন্ট তথ্য দিন।' : 'Provide your payment details to activate the premium plan.'}</p>
+                <div className="bg-bg3 border border-border rounded-3xl p-6 mb-10 text-left">
+                  <div className="animate-pulse space-y-6">
+                    <div className="h-4 bg-bg2 rounded-full w-3/4"></div>
+                    <div className="h-14 bg-bg2 rounded-full w-full"></div>
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="h-10 bg-bg2 rounded"></div>
-                      <div className="h-10 bg-bg2 rounded"></div>
+                      <div className="h-14 bg-bg2 rounded-full"></div>
+                      <div className="h-14 bg-bg2 rounded-full"></div>
                     </div>
                   </div>
-                  <p className="text-xs text-text3 mt-4 text-center">{i18n.language === 'bn' ? 'সিমুলেটেড পেমেন্ট গেটওয়ে' : 'Simulated Payment Gateway'}</p>
+                  <p className="text-[10px] text-text3 mt-6 text-center font-black uppercase tracking-widest">{i18n.language === 'bn' ? 'সিমুলেটেড পেমেন্ট গেটওয়ে' : 'Simulated Payment Gateway'}</p>
                 </div>
                 <button onClick={() => {
-                  /* Simulate payment processing */
                   setLoading(true);
                   setTimeout(() => {
                     setLoading(false);
                     setOnboardingStep('survey_source');
                   }, 1500);
-                }} className="btn-primary w-full py-4 text-lg">
+                }} className="btn-primary w-full py-5 text-xl font-black shadow-xl">
                   {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : (i18n.language === 'bn' ? 'পেমেন্ট কনফার্ম করুন' : 'Confirm Payment')}
                 </button>
               </motion.div>
             )}
 
             {onboardingStep === 'survey_source' && (
-              <motion.div key="survey_source" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'আপনি আমাদের সম্পর্কে কীভাবে জেনেছেন?' : 'How did you hear about us?'}</h2>
-                <p className="text-text2 text-sm mb-8">{i18n.language === 'bn' ? 'আপনার মতামত আমাদের অ্যাপ উন্নত করতে সাহায্য করবে।' : 'Your feedback helps us improve our app.'}</p>
-                <div className="grid grid-cols-2 gap-3 mb-8 text-left">
-                  {(i18n.language === 'bn' ? ['ফেসবুক', 'ইউটিউব', 'টিকটক', 'বন্ধু / রেফারেল', 'গুগল সার্চ', 'অন্যান্য'] : ['Facebook', 'YouTube', 'TikTok', 'Friend / Referral', 'Google Search', 'Other']).map(opt => (
-                    <button key={opt} onClick={() => setSurveySource(opt)} className={`p-4 rounded-xl border text-sm font-bold transition-all ${surveySource === opt ? 'bg-orange text-white border-orange' : 'bg-bg3 border-border hover:border-orange/50 text-text'}`}>
-                      {opt}
+              <motion.div key="survey_source" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-center max-w-sm mx-auto">
+                <h2 className="text-2xl font-black text-text mb-2 tracking-tight">
+                  {i18n.language === 'bn' ? 'কোথায় খুঁজেছেন?' : 'How did you find us?'}
+                </h2>
+                <p className="text-xs text-text3 mb-8 font-medium italic">
+                  {i18n.language === 'bn' ? 'এক মূহুর্তের ছোট একটি সার্ভে' : 'Just a quick 10-second survey'}
+                </p>
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                  {['Facebook', 'YouTube', 'TikTok', 'Friend', 'Ads', 'Other'].map((src) => (
+                    <button
+                      key={src}
+                      onClick={() => { setSurveySource(src); setOnboardingStep('survey_business'); }}
+                      className="bg-card border-2 border-border rounded-2xl py-4 font-bold text-xs hover:border-orange hover:bg-orange/5 transition-all shadow-sm"
+                    >
+                      {src}
                     </button>
                   ))}
                 </div>
-                <button onClick={() => setOnboardingStep('survey_business')} disabled={!surveySource} className={`btn-primary w-full py-4 text-lg ${!surveySource ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {i18n.language === 'bn' ? 'চালিয়ে যান' : 'Continue'}
-                </button>
               </motion.div>
             )}
 
             {onboardingStep === 'survey_business' && (
-              <motion.div key="survey_business" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'আপনার ব্যবসার ধরণ কী?' : 'What type of business do you run?'}</h2>
-                <p className="text-text2 text-sm mb-8">{i18n.language === 'bn' ? 'আপনার ব্যবসার সাথে মানানসই ক্যাটাগরি বেছে নিন।' : 'Select the category that best describes your business.'}</p>
-                <div className="space-y-3 mb-8 text-left h-64 overflow-y-auto pr-2 custom-scrollbar">
-                  {(i18n.language === 'bn' ? ['পোশাক ও ফ্যাশন', 'স্বাস্থ্য ও সৌন্দর্য', 'ইলেকট্রনিক্স', 'বাড়ি ও বাগান', 'খাদ্য ও মুদি', 'শিক্ষা / কোর্স', 'সফটওয়্যার ও আইটি', 'সার্ভিসেস', 'অন্যান্য'] : ['Clothing & Apparel', 'Health & Beauty', 'Electronics', 'Home & Garden', 'Food & Grocery', 'Education / Course', 'Software & IT', 'Services', 'Other']).map(opt => (
-                    <div key={opt} onClick={() => setSurveyBusiness(opt)} className={`p-4 rounded-xl border text-sm font-bold transition-all cursor-pointer flex items-center gap-3 ${surveyBusiness === opt ? 'bg-orange/10 border-orange text-orange' : 'bg-bg3 border-border hover:border-orange/50 text-text'}`}>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${surveyBusiness === opt ? 'border-orange' : 'border-text3'}`}>
-                        {surveyBusiness === opt && <div className="w-2 h-2 rounded-full bg-orange" />}
-                      </div>
-                      {opt}
-                    </div>
+              <motion.div key="survey_business" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-center max-w-sm mx-auto">
+                <h2 className="text-2xl font-black text-text mb-2 tracking-tight">
+                  {i18n.language === 'bn' ? 'ক্যাটাগরি কি?' : 'Your category?'}
+                </h2>
+                <p className="text-xs text-text3 mb-8 font-medium italic">
+                  {i18n.language === 'bn' ? 'আপনার পন্যের ধরণ কি?' : 'What do you mainly sell?'}
+                </p>
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                  {['Apparel', 'Gadget', 'Food', 'Beauty', 'Home', 'Service'].map((biz) => (
+                    <button
+                      key={biz}
+                      onClick={() => { setSurveyBusiness(biz); setOnboardingStep('survey_thanks'); }}
+                      className="bg-card border-2 border-border rounded-2xl py-4 font-bold text-xs hover:border-orange hover:bg-orange/5 transition-all shadow-sm"
+                    >
+                      {biz}
+                    </button>
                   ))}
                 </div>
-                <button onClick={() => setOnboardingStep('survey_thanks')} disabled={!surveyBusiness} className={`btn-primary w-full py-4 text-lg ${!surveyBusiness ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                  {i18n.language === 'bn' ? 'জমা দিন' : 'Submit Survey'}
-                </button>
               </motion.div>
             )}
 
             {onboardingStep === 'survey_thanks' && (
-              <motion.div key="survey_thanks" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="text-center py-8">
-                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Smile className="w-10 h-10 text-green-500" />
+              <motion.div key="survey_thanks" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-6 max-w-sm mx-auto">
+                <div className="w-16 h-16 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-orange/20">
+                  <CheckCircle2 className="w-8 h-8 text-orange" />
                 </div>
-                <h2 className="text-3xl font-bold text-text mb-4">{i18n.language === 'bn' ? 'ধন্যবাদ!' : 'Thank You!'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'আপনার মতামতের জন্য ধন্যবাদ। চলুন এবার আপনার প্রোফাইল সেটআপ করি।' : 'We appreciate your feedback. Let\'s get your profile set up now.'}</p>
-                <button onClick={() => setOnboardingStep('setup_profile')} className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2">
-                  {i18n.language === 'bn' ? 'সেটআপে এগিয়ে যান' : 'Proceed to Setup'} <ArrowRight className="w-5 h-5" />
+                <h2 className="text-2xl font-black text-text mb-2 tracking-tight">{i18n.language === 'bn' ? 'দারুণ!' : 'Great!'}</h2>
+                <p className="text-xs text-text3 mb-8 font-medium">{i18n.language === 'bn' ? 'চলুন এবার আপনার প্রোফাইলটি সম্পূর্ণ করি।' : 'Now let\'s complete your profile.'}</p>
+                <button onClick={() => setOnboardingStep('setup_profile')} className="btn-primary w-full py-3.5 text-base font-black shadow-lg">
+                  {i18n.language === 'bn' ? 'প্রোফাইল সেটআপ করুন' : 'Setup Profile'} 
                 </button>
               </motion.div>
             )}
 
             {onboardingStep === 'setup_profile' && (
-              <motion.div key="setup_profile" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'আপনার প্রোফাইল সেটআপ করুন' : 'Setup your Profile'}</h2>
-                <p className="text-text2 text-sm mb-6">{i18n.language === 'bn' ? 'আপনার নাম ও নাম্বার দিয়ে প্রোফাইল সম্পূর্ণ করুন।' : 'Provide your name and contact number for your profile.'}</p>
-                <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6 flex items-start gap-3 text-left">
-                  <AlertTriangle className="w-5 h-5 text-yellow-600 mt-0.5 shrink-0" />
-                  <p className="text-xs text-yellow-700 font-medium">{i18n.language === 'bn' ? 'নোট: এই নাম্বারটি পরবর্তীতে অ্যাপ সেটিংস থেকে যাচাই করতে হবে।' : 'Note: You will need to verify this number with a code later inside the App Settings.'}</p>
-                </div>
-                <div className="mb-4 text-left">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">{i18n.language === 'bn' ? 'আপনার নাম' : 'Your Name'}</label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-text3 w-5 h-5" />
-                    <input type="text" placeholder={i18n.language === 'bn' ? 'নাম লিখুন' : 'Enter your name'} value={profileName} onChange={(e) => setProfileName(e.target.value)} className="w-full bg-bg3 border border-border rounded-xl py-4 pl-12 pr-4 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all" />
+              <motion.div key="setup_profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="text-center max-w-xl mx-auto">
+                <h2 className="text-2xl sm:text-3xl font-black text-text mb-2 tracking-tight">
+                  {i18n.language === 'bn' ? 'আপনার প্রোফাইল' : 'Your Profile'}
+                </h2>
+                <p className="text-sm text-text3 mb-6 font-medium">
+                  {i18n.language === 'bn' ? 'আপনার নাম ও মোবাইল নাম্বার দিয়ে প্রোফাইল সম্পূর্ণ করুন।' : 'Complete your profile information.'}
+                </p>
+                
+                <div className="bg-orange/5 border border-orange/20 rounded-2xl p-4 mb-6 flex items-start gap-4 text-left backdrop-blur-sm">
+                  <div className="p-2 bg-orange/20 rounded-xl">
+                    <AlertTriangle className="w-5 h-5 text-orange" />
+                  </div>
+                  <div>
+                    <h4 className="text-[10px] font-black text-orange uppercase tracking-wider mb-0.5">{i18n.language === 'bn' ? 'একটি মুহূর্ত' : 'Important Note'}</h4>
+                    <p className="text-[11px] text-text2 font-bold leading-tight">
+                      {i18n.language === 'bn' ? 'এই নাম্বারটি পরবর্তীতে ভেরিফিকেশন কোডের মাধ্যমে যাচাই করতে হবে।' : 'This number will need to be verified with a code later.'}
+                    </p>
                   </div>
                 </div>
-                <div className="mb-8 text-left">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">{i18n.language === 'bn' ? 'মোবাইল নাম্বার' : 'Phone Number'}</label>
-                  <div className="relative">
-                    <Smartphone className="absolute left-4 top-1/2 -translate-y-1/2 text-text3 w-5 h-5" />
-                    <input type="tel" placeholder="+880 1XXX-XXXXXX" value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} className="w-full bg-bg3 border border-border rounded-xl py-4 pl-12 pr-4 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all" />
+
+                <div className="space-y-4 mb-8">
+                  <div className="text-left">
+                    <div className="relative">
+                      <User className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                      <input 
+                        type="text" 
+                        placeholder={i18n.language === 'bn' ? 'আপনার নাম' : 'Your Name'} 
+                        value={profileName} 
+                        onChange={(e) => setProfileName(e.target.value)} 
+                        className="w-full bg-card border-2 border-border rounded-full py-3.5 pl-12 pr-6 text-base font-bold focus:border-orange focus:ring-4 focus:ring-orange/10 outline-none transition-all shadow-sm" 
+                      />
+                    </div>
+                  </div>
+                  <div className="text-left">
+                    <div className="relative">
+                      <Smartphone className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                      <input 
+                        type="tel" 
+                        placeholder={i18n.language === 'bn' ? 'মোবাইল নাম্বার (+৮৮০)' : 'Phone Number (+880)'} 
+                        value={phoneNumber} 
+                        onChange={(e) => setPhoneNumber(e.target.value)} 
+                        className="w-full bg-card border-2 border-border rounded-full py-3.5 pl-12 pr-6 text-base font-bold focus:border-orange focus:ring-4 focus:ring-orange/10 outline-none transition-all shadow-sm" 
+                      />
+                    </div>
                   </div>
                 </div>
+
                 <div className="flex flex-col gap-3">
-                  <button onClick={handleProfileSubmit} disabled={!phoneNumber || !profileName} className={`btn-primary w-full py-4 text-lg ${!phoneNumber || !profileName ? 'opacity-50 cursor-not-allowed' : ''}`}>
-                    {i18n.language === 'bn' ? 'চালিয়ে যান' : 'Continue'}
+                  <button 
+                    onClick={handleProfileSubmit} 
+                    disabled={!phoneNumber || !profileName} 
+                    className={`btn-primary w-full py-3.5 text-base font-black shadow-lg ${!phoneNumber || !profileName ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {i18n.language === 'bn' ? 'এগিয়ে যান' : 'Continue'}
                   </button>
-                  <button onClick={() => { setOnboardingStep('setup_fb_login'); }} className="text-text3 hover:text-text font-bold text-sm py-2">
+                  <button onClick={() => { setOnboardingStep('setup_fb_login'); }} className="text-text3 hover:text-text font-black text-xs py-1 uppercase tracking-widest transition-colors">
                     {i18n.language === 'bn' ? 'এখন স্কিপ করুন' : 'Skip for now'}
                   </button>
                 </div>
@@ -611,17 +686,17 @@ export default function App() {
             )}
 
             {onboardingStep === 'setup_fb_login' && (
-              <motion.div key="setup_fb_login" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <div className="w-20 h-20 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <Facebook className="text-blue-500 w-10 h-10" />
+              <motion.div key="setup_fb_login" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center max-w-xl mx-auto">
+                <div className="w-16 h-16 bg-blue-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Facebook className="text-blue-500 w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'ফেসবুকের সাথে লগইন করুন' : 'Login with Facebook'}</h2>
-                <p className="text-text2 mb-8 max-w-md mx-auto">{i18n.language === 'bn' ? 'পেজ এবং অ্যাড অ্যাকাউন্ট অ্যাক্সেস করতে আপনার মেটা অ্যাকাউন্ট নিরাপদে কানেক্ট করুন।' : 'Connect your Meta account securely to access Pages and Ad accounts.'}</p>
+                <h2 className="text-2xl sm:text-3xl font-black text-text mb-2 tracking-tight">{i18n.language === 'bn' ? 'ফেসবুকের সাথে লগইন করুন' : 'Login with Facebook'}</h2>
+                <p className="text-base text-text2 mb-8 max-w-sm mx-auto font-medium">{i18n.language === 'bn' ? 'পেজ এবং অ্যাড অ্যাকাউন্ট অ্যাক্সেস করতে মেটা অ্যাকাউন্ট কানেক্ট করুন।' : 'Connect your Meta account securely.'}</p>
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => setShowFbModal(true)} className="bg-[#1877F2] text-white w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 hover:bg-[#1864D9] transition-all">
+                  <button onClick={() => setShowFbModal(true)} className="bg-[#1877F2] text-white w-full py-3.5 rounded-full font-black text-base flex items-center justify-center gap-3 hover:bg-[#1864D9] transition-all shadow-lg">
                     <Facebook className="w-6 h-6" /> {i18n.language === 'bn' ? 'ফেসবুকের সাথে চালিয়ে যান' : 'Continue with Facebook'}
                   </button>
-                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-bold text-sm py-2">
+                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-black text-[10px] py-1 uppercase tracking-widest transition-colors">
                     {i18n.language === 'bn' ? 'এখন স্কিপ করুন' : 'Skip for now'}
                   </button>
                 </div>
@@ -629,22 +704,24 @@ export default function App() {
             )}
 
             {onboardingStep === 'setup_fb_page' && (
-              <motion.div key="setup_fb_page" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'আপনার ফেসবুক পেজ বেছে নিন' : 'Select your Facebook Page'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'আপনি যে পেজ থেকে বিক্রি করেন সেটি নির্বাচন করুন।' : 'Select the Page you sell from.'}</p>
+              <motion.div key="setup_fb_page" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-xl mx-auto text-center">
+                <h2 className="text-2xl sm:text-3xl font-black text-text mb-2 tracking-tight">{i18n.language === 'bn' ? 'ফেসবুক পেজ বেছে নিন' : 'Select Facebook Page'}</h2>
+                <p className="text-sm text-text3 mb-8 font-medium">{i18n.language === 'bn' ? 'আপনি যে পেজ থেকে বিক্রি করেন সেটি নির্বাচন করুন।' : 'Select the Page you sell from.'}</p>
                 <div className="space-y-3 mb-8">
-                  <button onClick={() => setOnboardingStep('setup_ad_account')} className="w-full bg-bg3 border-2 border-orange rounded-2xl p-4 flex items-center gap-4 hover:bg-bg2 transition-all text-left">
-                    <div className="w-12 h-12 bg-orange/20 rounded-full flex items-center justify-center font-bold text-orange">F</div>
+                  <button onClick={() => setOnboardingStep('setup_ad_account')} className="w-full bg-card border border-orange rounded-2xl p-4 flex items-center gap-4 hover:bg-bg2 transition-all text-left shadow-md group">
+                    <div className="w-12 h-12 bg-orange/10 rounded-full flex items-center justify-center font-black text-xl text-orange group-hover:scale-110 transition-transform">F</div>
                     <div>
-                      <p className="font-bold text-text">Fashion Hub BD</p>
-                      <p className="text-xs text-text3">{i18n.language === 'bn' ? 'বিজনেস পেজ' : 'Business Page'}</p>
+                      <p className="text-base font-black text-text">Fashion Hub BD</p>
+                      <p className="text-[10px] font-bold text-text3 uppercase tracking-wider">{i18n.language === 'bn' ? 'বিজনেস পেজ' : 'Business Page'}</p>
                     </div>
                     <CheckCircle2 className="ml-auto text-orange w-6 h-6" />
                   </button>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => setOnboardingStep('setup_ad_account')} className="btn-primary w-full py-4 text-lg">{i18n.language === 'bn' ? 'এই পেজ কানেক্ট করুন' : 'Connect this Page'}</button>
-                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-bold text-sm py-2 text-center">
+                  <button onClick={() => setOnboardingStep('setup_ad_account')} className="btn-primary w-full py-3.5 text-base font-black shadow-lg">
+                    {i18n.language === 'bn' ? 'এই পেজ কানেক্ট করুন' : 'Connect this Page'}
+                  </button>
+                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-black text-[10px] py-1 uppercase tracking-widest transition-colors">
                     {i18n.language === 'bn' ? 'এখন স্কিপ করুন' : 'Skip for now'}
                   </button>
                 </div>
@@ -652,18 +729,25 @@ export default function App() {
             )}
 
             {onboardingStep === 'setup_ad_account' && (
-              <motion.div key="setup_ad_account" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'মেটা অ্যাডস অ্যাকাউন্ট কানেক্ট করুন' : 'Connect Meta Ads account'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'এটি কাস্টমার কোন অ্যাড থেকে এসেছে তা ট্র্যাক করতে সাহায্য করবে।' : 'This lets track which Ad each customer came from.'}</p>
+              <motion.div key="setup_ad_account" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="max-w-xl mx-auto text-center">
+                <h2 className="text-2xl sm:text-3xl font-black text-text mb-2 tracking-tight">{i18n.language === 'bn' ? 'মেটা অ্যাডস কানেক্ট করুন' : 'Connect Meta Ads'}</h2>
+                <p className="text-sm text-text3 mb-8 font-medium">{i18n.language === 'bn' ? 'এটি কাস্টমার কোন অ্যাড থেকে এসেছে তা ট্র্যাক করতে সাহায্য করবে।' : 'Track which Ad each customer came from.'}</p>
                 <div className="space-y-3 mb-8">
-                  <select className="w-full bg-bg3 border border-border rounded-xl py-4 px-4 text-text focus:border-orange outline-none">
-                    <option>Fashion Hub Ads (12938475)</option>
-                    <option>Personal Ads (98237412)</option>
-                  </select>
+                  <div className="relative">
+                    <select className="w-full bg-card border-2 border-border rounded-full py-3.5 px-6 text-base font-bold text-text focus:border-orange outline-none shadow-sm appearance-none cursor-pointer">
+                      <option>Fashion Hub Ads (12938475)</option>
+                      <option>Personal Ads (98237412)</option>
+                    </select>
+                    <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-text3">
+                      <ArrowRight className="w-4 h-4 rotate-90" />
+                    </div>
+                  </div>
                 </div>
                 <div className="flex flex-col gap-3">
-                  <button onClick={() => setOnboardingStep('setup_telegram')} className="btn-primary w-full py-4 text-lg">{i18n.language === 'bn' ? 'অ্যাকাউন্ট কনফার্ম করুন' : 'Confirm Account'}</button>
-                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-bold text-sm py-2 text-center">
+                  <button onClick={() => setOnboardingStep('setup_telegram')} className="btn-primary w-full py-3.5 text-base font-black shadow-lg">
+                    {i18n.language === 'bn' ? 'অ্যাকাউন্ট কনফার্ম করুন' : 'Confirm Account'}
+                  </button>
+                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-black text-[10px] py-1 uppercase tracking-widest transition-colors">
                     {i18n.language === 'bn' ? 'এখন স্কিপ করুন' : 'Skip for now'}
                   </button>
                 </div>
@@ -671,20 +755,20 @@ export default function App() {
             )}
 
             {onboardingStep === 'setup_telegram' && (
-              <motion.div key="setup_telegram" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
-                <div className="w-20 h-20 bg-cyan/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                  <MessageSquare className="text-cyan w-10 h-10" />
+              <motion.div key="setup_telegram" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center max-w-xl mx-auto">
+                <div className="w-16 h-16 bg-cyan/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Zap className="text-cyan w-8 h-8" />
                 </div>
-                <h2 className="text-2xl font-bold text-text mb-2">{i18n.language === 'bn' ? 'টেলিগ্রাম কানেক্ট করুন' : 'Connect Telegram'}</h2>
-                <p className="text-text2 mb-8 max-w-md mx-auto">{i18n.language === 'bn' ? 'আপনার টেলিগ্রামে সরাসরি ডেলিভারি করা দৈনিক সারাংশ এবং সতর্কতাগুলি পান।' : 'Get daily summaries and alerts delivered straight to your Telegram.'}</p>
+                <h2 className="text-2xl sm:text-3xl font-black text-text mb-2 tracking-tight">{i18n.language === 'bn' ? 'টেলিগ্রাম কানেক্ট করুন' : 'Connect Telegram'}</h2>
+                <p className="text-base text-text2 mb-8 max-w-sm mx-auto font-medium">{i18n.language === 'bn' ? 'ডেলিভারি করা দৈনিক সারাংশ এবং সতর্কতাগুলি পান।' : 'Get daily summaries and alerts delivered to Telegram.'}</p>
                 <div className="flex flex-col gap-3">
                   <button onClick={async () => {
                     await handleOnboardingComplete('mock_page_id', 'mock_token', 'mock_ad_account_id');
                     setOnboardingStep('setup_complete');
-                  }} className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2">
-                    {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : <>{i18n.language === 'bn' ? 'সেটআপ সম্পূর্ণ করুন' : 'Complete Setup'} <Zap className="w-5 h-5" /></>}
+                  }} className="btn-primary w-full py-3.5 text-lg font-black shadow-lg flex items-center justify-center gap-3">
+                    {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" /> : <>{i18n.language === 'bn' ? 'সেটআপ সম্পূর্ণ করুন' : 'Complete Setup'} <Zap className="w-5 h-5" /></>}
                   </button>
-                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-bold text-sm py-2 text-center">
+                  <button onClick={() => { setOnboardingStep('setup_skipped_thanks'); }} className="text-text3 hover:text-text font-black text-[10px] py-1 uppercase tracking-widest transition-colors">
                     {i18n.language === 'bn' ? 'এটি স্কিপ করুন' : 'Skip this'}
                   </button>
                 </div>
@@ -692,35 +776,33 @@ export default function App() {
             )}
 
             {onboardingStep === 'setup_skipped_thanks' && (
-              <motion.div key="setup_skipped_thanks" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-8">
-                <div className="w-24 h-24 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 className="w-12 h-12 text-orange" />
+              <motion.div key="setup_skipped_thanks" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-6 max-w-xl mx-auto">
+                <div className="w-20 h-20 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-orange/20">
+                  <CheckCircle2 className="w-10 h-10 text-orange" />
                 </div>
-                <h2 className="text-3xl font-bold text-text mb-6">{i18n.language === 'bn' ? 'ধন্যবাদ!' : 'Thank You!'}</h2>
-                <p className="text-text2 mb-8">{i18n.language === 'bn' ? 'আপনি ড্যাশবোর্ড থেকে যে কোনো সময় আপনার সোশ্যাল অ্যাকাউন্ট কানেক্ট করতে পারবেন।' : 'You can connect your social accounts at any time from your dashboard.'}</p>
-                <div className="flex flex-col gap-3">
-                  <button onClick={() => { setIntegrationSkipped(true); setView('dashboard'); }} className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2">
-                    {i18n.language === 'bn' ? 'ড্যাশবোর্ডে যান' : 'Go to Dashboard'} <ArrowRight className="w-5 h-5" />
-                  </button>
-                </div>
+                <h2 className="text-3xl sm:text-4xl font-black text-text mb-4 tracking-tight">{i18n.language === 'bn' ? 'ধন্যবাদ!' : 'Thank You!'}</h2>
+                <p className="text-base text-text2 mb-8 font-medium">{i18n.language === 'bn' ? 'আপনি ড্যাশবোর্ড থেকে যে কোনো সময় আপনার সোশ্যাল অ্যাকাউন্ট কানেক্ট করতে পারবেন।' : 'You can connect your accounts anytime from the dashboard.'}</p>
+                <button onClick={() => { setIntegrationSkipped(true); setView('dashboard'); }} className="btn-primary w-full py-3.5 text-lg font-black shadow-lg">
+                  {i18n.language === 'bn' ? 'ড্যাশবোর্ডে যান' : 'Go to Dashboard'} 
+                </button>
               </motion.div>
             )}
 
             {onboardingStep === 'setup_complete' && (
-              <motion.div key="setup_complete" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center">
-                <div className="w-24 h-24 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <CheckCircle2 className="w-12 h-12 text-green-500" />
+              <motion.div key="setup_complete" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center max-w-xl mx-auto">
+                <div className="w-20 h-20 bg-green/10 rounded-full flex items-center justify-center mx-auto mb-6 border-2 border-green/20">
+                  <CheckCircle2 className="w-10 h-10 text-green" />
                 </div>
-                <h2 className="text-3xl font-bold text-text mb-6">{i18n.language === 'bn' ? 'সেটআপ সম্পন্ন হয়েছে!' : 'Setup Complete!'}</h2>
+                <h2 className="text-3xl sm:text-4xl font-black text-text mb-4 tracking-tight">{i18n.language === 'bn' ? 'সেটআপ সম্পন্ন হয়েছে!' : 'Setup Complete!'}</h2>
                 
-                <div className="bg-cyan/10 border border-cyan/20 rounded-2xl p-6 mb-8 text-center max-w-sm mx-auto">
-                  <p className="text-[15px] text-cyan font-bold leading-relaxed">
-                    {i18n.language === 'bn' ? 'এখন থেকে আপনার পেজে আসা যেকোনো সোর্সের মেসেজ সিঙ্ক হবে এবং অ্যাপ ফিচার অনুযায়ী দেখানো হবে।' : 'From now on, messages from any source to your page will be synced and displayed according to app features.'}
+                <div className="bg-cyan/5 border border-cyan/20 rounded-2xl p-6 mb-8 text-center max-w-sm mx-auto backdrop-blur-sm">
+                  <p className="text-sm text-cyan font-bold leading-relaxed">
+                    {i18n.language === 'bn' ? 'এখন থেকে আপনার সোর্সের ম্যাসেজ সিঙ্ক হবে এবং অ্যাপ ফিচার অনুযায়ী দেখানো হবে।' : 'Your messages will now be synced and displayed according to app features.'}
                   </p>
                 </div>
 
-                <button onClick={() => { setIntegrationSkipped(false); setView('dashboard'); }} className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2">
-                  {i18n.language === 'bn' ? 'ড্যাশবোর্ডে যান' : 'Go to Dashboard'} <ArrowRight className="w-5 h-5" />
+                <button onClick={() => { setIntegrationSkipped(false); setView('dashboard'); }} className="btn-primary w-full py-3.5 text-lg font-black shadow-lg">
+                  {i18n.language === 'bn' ? 'ড্যাশবোর্ডে যান' : 'Go to Dashboard'} 
                 </button>
               </motion.div>
             )}
@@ -874,32 +956,37 @@ export default function App() {
 
     if (view === 'auth') {
       return (
-      <div className="min-h-screen bg-bg flex items-center justify-center p-6 relative overflow-hidden">
+      <div className="auth-container">
         <div className="hero-orb-l" />
-        <div className="hero-grid" />
+        <div className="hero-grid opacity-20" />
         
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-card border border-border2 rounded-[24px] p-5 md:p-12 relative z-10 shadow-2xl max-h-[95vh] overflow-y-auto"
+          className="auth-card"
         >
-          <div className="text-center mb-8">
-            <div className="flex justify-center">
-              <Logo size="lg" theme={theme} className="mx-auto" showText={false} />
+          <div className="text-center mb-6">
+            <div className="flex justify-center mb-4">
+              <Logo size="md" theme={theme} showText={false} />
             </div>
             {authMode === 'login' ? (
               <>
-                <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-6">
-                  Welcome Back!
+                <h2 className="text-2xl font-black tracking-tight">
+                  {i18n.language === 'bn' ? 'আবার স্বাগতম!' : 'Welcome Back!'}
                 </h2>
-                <p className="text-text2 mt-2">
+                <p className="text-sm text-text3 mt-1 font-medium">
                   {i18n.language === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Login to your account'}
                 </p>
               </>
             ) : (
-               <p className="text-text2 mt-6">
-                {i18n.language === 'bn' ? 'আপনার তথ্য দিয়ে শুরু করুন' : 'Start with your information'}
-              </p>
+              <>
+                <h2 className="text-2xl font-black tracking-tight">
+                  {i18n.language === 'bn' ? 'একাউন্ট তৈরি করুন' : 'Create Account'}
+                </h2>
+                <p className="text-sm text-text3 mt-1 font-medium">
+                  {i18n.language === 'bn' ? 'Trackoora-এ যাত্রা শুরু করুন' : 'Start your journey with Trackoora'}
+                </p>
+              </>
             )}
           </div>
 
@@ -919,18 +1006,20 @@ export default function App() {
                       ? `আপনার ${email} ঠিকানায় একটি ৬-সংখ্যার কোড পাঠানো হয়েছে।` 
                       : `A 6-digit code has been sent to your ${email} address.`}
                   </p>
-                  <p className="text-xs text-orange font-bold px-4 py-2 bg-orange/10 rounded-lg mb-6 max-w-sm mx-auto">
-                    Note: If you don't receive an email due to server limits, you can enter any 6-digit code (e.g., 123456) to bypass.
+                  <p className="text-xs text-orange font-bold px-4 py-2 bg-orange/10 rounded-full mb-8 max-w-sm mx-auto border border-orange/20">
+                    {i18n.language === 'bn' 
+                      ? 'দ্রষ্টব্য: সার্ভার সমস্যার কারণে ইমেল না পেলে, যে কোনো ৬-সংখ্যার কোড (যেমন: 123456) ব্যবহার করে এগিয়ে যান।' 
+                      : 'Note: If you don\'t receive an email, use any 6-digit code (e.g., 123456) to bypass.'}
                   </p>
                   
-                  <div className="flex justify-between gap-1 sm:gap-2 mb-8 px-1 sm:px-0 max-w-[320px] mx-auto">
+                  <div className="flex justify-center gap-2 mb-6">
                     {[0, 1, 2, 3, 4, 5].map((i) => (
                       <input
                         key={i}
                         id={`otp-${i}`}
                         type="text"
                         maxLength={1}
-                        className="w-9 h-11 sm:w-12 sm:h-14 bg-bg3 border border-border rounded-xl text-center text-lg sm:text-2xl font-bold text-orange focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all"
+                        className="w-10 h-12 sm:w-12 sm:h-14 bg-card border border-border2 rounded-xl text-center text-xl font-black text-orange focus:border-orange outline-none transition-all"
                         value={otp[i] || ''}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -952,12 +1041,12 @@ export default function App() {
                   </div>
                 </div>
 
-                {error && <p className="text-red text-sm bg-red-dim p-3 rounded-lg border border-red/20">{error}</p>}
+                {error && <p className="text-red text-sm bg-red-dim p-4 rounded-2xl border border-red/20 mb-6">{error}</p>}
 
                 <button 
                   type="submit" 
                   disabled={loading || otp.length < 6}
-                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2"
+                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 shadow-lg"
                 >
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -969,14 +1058,14 @@ export default function App() {
                   )}
                 </button>
 
-                <div className="text-center">
+                <div className="text-center pt-4">
                   <button 
                     type="button"
                     onClick={() => {
                       setAuthStep('form');
                       setOtp('');
                     }}
-                    className="text-text3 hover:text-text transition-colors text-sm font-medium"
+                    className="text-text3 hover:text-text transition-colors text-sm font-bold uppercase tracking-wider"
                   >
                     {i18n.language === 'bn' ? 'ইমেল পরিবর্তন করুন' : 'Change Email'}
                   </button>
@@ -989,88 +1078,14 @@ export default function App() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 onSubmit={handleLogin} 
-                className="space-y-4"
+                className="space-y-5"
               >
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">
-                    {i18n.language === 'bn' ? 'ইমেল ঠিকানা' : 'Email Address'}
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text3 w-5 h-5" />
-                    <input 
-                      type="email" 
-                      placeholder="example@mail.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-bg3 border border-border rounded-xl py-3.5 pl-12 pr-4 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">
-                    {i18n.language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
-                  </label>
-                  <div className="relative">
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-bg3 border border-border rounded-xl py-3.5 px-4 pr-11 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text3 hover:text-text transition-colors p-1"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <div className="text-right mt-2">
-                    <button 
-                      type="button" 
-                      onClick={() => {
-                        setForgotPasswordStep('input');
-                        setActiveModal('forgot-password');
-                      }}
-                      className="text-xs text-orange font-bold hover:underline"
-                    >
-                      {i18n.language === 'bn' ? 'Password ভুলে গেছেন?' : 'Forgot Password?'}
-                    </button>
-                  </div>
-                </div>
-
-                {error && <p className="text-red text-sm bg-red-dim p-3 rounded-lg border border-red/20">{error}</p>}
-
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 mt-2"
-                >
-                  {loading ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      {i18n.language === 'bn' ? 'চালিয়ে যান' : 'Continue'}
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-
-                <div className="relative py-4">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-text3">{i18n.language === 'bn' ? 'অথবা' : 'OR'}</span></div>
-                </div>
-
-                <div className="mt-2 text-center">
+                <div className="text-center">
                   <button 
                     type="button" 
                     onClick={handleGoogleAuth}
                     disabled={loading}
-                    className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-200 text-[14px] shadow-sm hover:scale-[1.02] active:scale-95"
+                    className="w-full bg-white text-black font-bold py-4 rounded-full hover:bg-gray-100 transition-all flex items-center justify-center gap-3 border border-gray-200 text-base shadow-sm hover:scale-[1.01] active:scale-[0.98]"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1082,16 +1097,96 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="text-center mt-6">
+                <div className="relative py-4">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/60"></div></div>
+                  <div className="relative flex justify-center text-[10px] font-black uppercase tracking-[2px]"><span className="bg-bg px-4 text-text3">{i18n.language === 'bn' ? 'অথবা' : 'OR'}</span></div>
+                </div>
+
+                <div>
+                  <div className="relative">
+                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <input 
+                      type="email" 
+                      placeholder={i18n.language === 'bn' ? 'ইমেল (example@mail.com)' : 'Email Address'}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="auth-input pl-12 py-3 text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="relative">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder={i18n.language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="auth-input pl-12 pr-12 py-3 text-sm"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text3 hover:text-text transition-colors p-1.5"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="text-right">
+                    <button 
+                      type="button" 
+                      onClick={() => {
+                        setForgotPasswordStep('input');
+                        setActiveModal('forgot-password');
+                      }}
+                      className="text-[11px] text-orange font-bold hover:underline"
+                    >
+                      {i18n.language === 'bn' ? 'পাসওয়ার্ড ভুলে গেছেন?' : 'Forgot Password?'}
+                    </button>
+                  </div>
+                </div>
+
+                {error && <p className="text-red text-xs bg-red-dim px-4 py-2.5 rounded-xl border border-red/20">{error}</p>}
+
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="btn-primary w-full py-3 text-base font-bold shadow-md"
+                >
+                  {loading ? (
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
+                  ) : (
+                    <>
+                      {i18n.language === 'bn' ? 'লগইন করুন' : 'Login'}
+                    </>
+                  )}
+                </button>
+
+                <div className="text-center pt-2">
+                  <p className="text-text2 text-xs font-medium">
+                    {i18n.language === 'bn' ? 'একাউন্ট নেই?' : "Don't have an account?"}{' '}
+                    <button 
+                      type="button"
+                      onClick={() => setAuthMode('signup')}
+                      className="text-orange font-black hover:underline"
+                    >
+                      {i18n.language === 'bn' ? 'ফ্রি সাইনআপ' : 'Signup Free'}
+                    </button>
+                  </p>
+                </div>
+
+                <div className="pt-1">
                   <button 
                     type="button"
                     onClick={() => {
                       resetAuthForm();
                       setView('landing');
                     }}
-                    className="text-text2 hover:text-text text-sm flex items-center justify-center gap-1 mx-auto transition-colors"
+                    className="w-full text-text3 hover:text-text font-bold text-xs"
                   >
-                    <ArrowRight className="w-4 h-4 rotate-180" />
                     {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
                   </button>
                 </div>
@@ -1103,127 +1198,14 @@ export default function App() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 20 }}
                 onSubmit={handleSignup} 
-                className="space-y-4"
+                className="space-y-5"
               >
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">
-                    {i18n.language === 'bn' ? 'পুরো নাম' : 'Full Name'}
-                  </label>
-                  <input 
-                    type="text" 
-                    placeholder={i18n.language === 'bn' ? 'আপনার নাম লিখুন' : 'Enter your name'}
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    className="w-full bg-bg3 border border-border rounded-xl py-3.5 px-4 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">
-                    {i18n.language === 'bn' ? 'ইমেল ঠিকানা' : 'Email Address'}
-                  </label>
-                  <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-text3 w-5 h-5" />
-                    <input 
-                      type="email" 
-                      placeholder="example@mail.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full bg-bg3 border border-border rounded-xl py-3.5 pl-12 pr-4 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all"
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-text3 mb-1.5 ml-1">
-                    {i18n.language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
-                  </label>
-                  <div className="relative">
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full bg-bg3 border border-border rounded-xl py-3.5 px-4 pr-11 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-text3 hover:text-text transition-colors p-1"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  <div className="mt-2 p-3 bg-cyan/10 border border-cyan/20 rounded-xl flex items-start gap-2">
-                    <ShieldCheck className="w-4 h-4 text-cyan shrink-0 mt-0.5" />
-                    <p className="text-[11px] text-cyan font-medium leading-relaxed">
-                      {i18n.language === 'bn' 
-                        ? 'টিপস: অন্তত ৮টি অক্ষর, সংখ্যা এবং (@, /) চিহ্ন ব্যবহার করে আপনার অ্যাকাউন্ট সুরক্ষিত রাখুন।' 
-                        : 'Tip: Keep your account secure by using at least 8 characters, numbers, and (@, /) symbols.'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-2 mt-2 px-1">
-                  <input 
-                    type="checkbox" 
-                    id="agreement"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 accent-orange shrink-0 cursor-pointer"
-                    required
-                  />
-                  <label htmlFor="agreement" className="text-[11px] text-text2 leading-relaxed cursor-pointer">
-                    {i18n.language === 'bn' ? (
-                      <>
-                        আমি ট্র্যকুরা-এর{' '}
-                        <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/terms-of-service", "terms"); }} className="text-orange font-bold hover:underline">শর্তাবলী</a>
-                        {' '}এবং{' '}
-                        <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/privacy-policy", "privacy"); }} className="text-orange font-bold hover:underline">গোপনীয়তা নীতি</a>
-                        -তে সম্মত হচ্ছি।
-                      </>
-                    ) : (
-                      <>
-                        I agree to the{' '}
-                        <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/terms-of-service", "terms"); }} className="text-orange font-bold hover:underline">Terms of Service</a>
-                        {' '}and{' '}
-                        <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); e.stopPropagation(); navigateTo("/privacy-policy", "privacy"); }} className="text-orange font-bold hover:underline">Privacy Policy</a> of Trackoora.
-                      </>
-                    )}
-                  </label>
-                </div>
-
-                {error && <p className="text-red text-sm bg-red-dim p-3 rounded-lg border border-red/20">{error}</p>}
-
-                <button 
-                  type="submit" 
-                  disabled={loading}
-                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 mt-2"
-                >
-                  {loading ? (
-                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      {i18n.language === 'bn' ? 'চালিয়ে যান' : 'Continue'}
-                      <ArrowRight className="w-5 h-5" />
-                    </>
-                  )}
-                </button>
-
-                <div className="relative py-4">
-                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
-                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-text3">{i18n.language === 'bn' ? 'অথবা' : 'OR'}</span></div>
-                </div>
-
-                <div className="mt-2 text-center">
+                <div className="text-center">
                   <button 
                     type="button" 
                     onClick={handleGoogleAuth}
                     disabled={loading}
-                    className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-200 text-[14px] shadow-sm hover:scale-[1.02] active:scale-95"
+                    className="w-full bg-white text-black font-bold py-3 rounded-full hover:bg-gray-100 transition-all flex items-center justify-center gap-3 border border-gray-200 text-sm shadow-sm hover:scale-[1.01] active:scale-[0.98]"
                   >
                     <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -1235,33 +1217,123 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="text-center mt-6">
-                  <p className="text-text2 text-sm">
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border/40"></div></div>
+                  <div className="relative flex justify-center text-[9px] font-black uppercase tracking-[2px]"><span className="bg-bg px-3 text-text3">{i18n.language === 'bn' ? 'অথবা' : 'OR'}</span></div>
+                </div>
+
+                <div>
+                  <div className="relative">
+                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <input 
+                      type="email" 
+                      placeholder={i18n.language === 'bn' ? 'ইমেল (example@mail.com)' : 'Email Address'}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="auth-input pl-12 py-3 text-sm"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="relative">
+                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder={i18n.language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="auth-input pl-12 pr-12 py-3 text-sm"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-text3 hover:text-text transition-colors p-1.5"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  <div className="mt-2 p-3 bg-cyan/5 border border-cyan/20 rounded-xl flex items-start gap-2">
+                    <ShieldCheck className="w-4 h-4 text-cyan shrink-0 mt-0.5" />
+                    <p className="text-[10px] text-cyan font-bold leading-tight">
+                      {i18n.language === 'bn' 
+                        ? 'টিপস: অন্তত ৮টি অক্ষর, সংখ্যা এবং (@, /) চিহ্ন ব্যবহার করে আপনার অ্যাকাউন্ট সুরক্ষিত রাখুন।' 
+                        : 'Tip: Use 8+ characters, numbers, and symbols to keep your account secure.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 mt-2 px-1">
+                  <input 
+                    type="checkbox" 
+                    id="agreement"
+                    checked={agreedToTerms}
+                    onChange={(e) => setAgreedToTerms(e.target.checked)}
+                    className="mt-1 w-4 h-4 accent-orange shrink-0 cursor-pointer rounded"
+                    required
+                  />
+                  <label htmlFor="agreement" className="text-[11px] text-text2 leading-relaxed cursor-pointer font-medium">
+                    {i18n.language === 'bn' ? (
+                      <>
+                        আমি Trackoora-এর{' '}
+                        <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); navigateTo("/terms-of-service", "terms"); }} className="text-orange font-black hover:underline">শর্তাবলী</a>
+                        {' '}এবং{' '}
+                        <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigateTo("/privacy-policy", "privacy"); }} className="text-orange font-black hover:underline">গোপনীয়তা নীতি</a>-তে সম্মত হচ্ছি।
+                      </>
+                    ) : (
+                      <>
+                        I agree to the{' '}
+                        <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); navigateTo("/terms-of-service", "terms"); }} className="text-orange font-black hover:underline">Terms of Service</a>
+                        {' '}and{' '}
+                        <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigateTo("/privacy-policy", "privacy"); }} className="text-orange font-black hover:underline">Privacy Policy</a>.
+                      </>
+                    )}
+                  </label>
+                </div>
+
+                {error && <p className="text-red text-xs bg-red-dim px-4 py-2 rounded-xl border border-red/20">{error}</p>}
+
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="btn-primary w-full py-3 text-base font-bold shadow-md"
+                >
+                  {loading ? (
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
+                  ) : (
+                    <>
+                      {i18n.language === 'bn' ? 'সাইনআপ সম্পন্ন করুন' : 'Complete Signup'}
+                    </>
+                  )}
+                </button>
+
+                <div className="text-center pt-2">
+                  <p className="text-text2 text-xs font-medium">
                     {i18n.language === 'bn' ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে?' : "Already have an account?"}{' '}
                     <button 
                       type="button"
-                      onClick={() => {
-                        setError(null);
-                        setAuthMode('login');
-                      }}
-                      className="text-orange font-bold hover:underline"
+                      onClick={() => setAuthMode('login')}
+                      className="text-orange font-black hover:underline"
                     >
                       {i18n.language === 'bn' ? 'লগইন করুন' : 'Login'}
                     </button>
                   </p>
                 </div>
 
-                <button 
-                  type="button"
-                  onClick={() => {
-                    resetAuthForm();
-                    setView('landing');
-                  }}
-                  className="w-full bg-bg2 border border-border text-text2 hover:text-text hover:border-orange/50 transition-all py-3.5 rounded-xl text-sm font-bold mt-2 flex items-center justify-center gap-2"
-                >
-                  <ArrowRight className="w-4 h-4 rotate-180" />
-                  {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
-                </button>
+                <div className="pt-1">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      resetAuthForm();
+                      setView('landing');
+                    }}
+                    className="w-full text-text3 hover:text-text font-bold text-xs"
+                  >
+                    {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
+                  </button>
+                </div>
               </motion.form>
             )}
           </AnimatePresence>
@@ -1296,11 +1368,11 @@ export default function App() {
                       <div className="pl-4 space-y-2">
                         <p className="font-bold text-sm">{i18n.language === 'bn' ? 'সেলার-সম্পর্কিত তথ্য:' : 'Seller-related information:'}</p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
-                          <li>{i18n.language === 'bn' ? 'নাম, ফোন নম্বর, ইমেইল — account registration-এর সময়' : 'Name, phone number, email — during account registration'}</li>
-                          <li>{i18n.language === 'bn' ? 'Facebook Page তথ্য ও OAuth access token — Facebook Login-এর মাধ্যমে। আপনার Facebook পাসওয়ার্ড আমরা কখনো দেখি না, সংরক্ষণ করি না' : 'Facebook Page info & OAuth access token — via Facebook Login. We never see or store your Facebook password'}</li>
-                          <li>{i18n.language === 'bn' ? 'Meta Ads account ID — ad performance data pull করতে' : 'Meta Ads account ID — to pull ad performance data'}</li>
-                          <li>{i18n.language === 'bn' ? 'Telegram chat ID — daily report পাঠাতে (যদি সংযুক্ত করেন)' : 'Telegram chat ID — to send daily reports (if connected)'}</li>
-                          <li>{i18n.language === 'bn' ? 'Subscription ও billing তথ্য — payment gateway-এর মাধ্যমে' : 'Subscription & billing info — via payment gateway'}</li>
+                          <li>{i18n.language === 'bn' ? 'নাম, ফোন নম্বর, ইমেইল account registration-এর সময়' : 'Name, phone number, email during account registration'}</li>
+                          <li>{i18n.language === 'bn' ? 'Facebook Page তথ্য ও OAuth access token Facebook Login-এর মাধ্যমে। আপনার Facebook পাসওয়ার্ড আমরা কখনো দেখি না, সংরক্ষণ করি না' : 'Facebook Page info & OAuth access token via Facebook Login. We never see or store your Facebook password'}</li>
+                          <li>{i18n.language === 'bn' ? 'Meta Ads account ID ad performance data pull করতে' : 'Meta Ads account ID to pull ad performance data'}</li>
+                          <li>{i18n.language === 'bn' ? 'Telegram chat ID daily report পাঠাতে (যদি সংযুক্ত করেন)' : 'Telegram chat ID to send daily reports (if connected)'}</li>
+                          <li>{i18n.language === 'bn' ? 'Subscription ও billing তথ্য payment gateway-এর মাধ্যমে' : 'Subscription & billing info via payment gateway'}</li>
                         </ul>
                         <p className="font-bold text-sm mt-4">{i18n.language === 'bn' ? 'Customer-সম্পর্কিত তথ্য (সেলারের হয়ে সংগৃহীত):' : 'Customer-related information (collected on behalf of the seller):'}</p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
@@ -1318,11 +1390,11 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '২. কেন এই তথ্য সংগ্রহ করা হয়' : '2. Why this information is collected'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Trackoora-এর service প্রদান — এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora service — this is the sole purpose'}</li>
-                        <li>{i18n.language === 'bn' ? 'Meta Algorithm-এ sale signal ও — সেলারের Ads performance উন্নত করতে' : 'Sale signals to Meta Algorithm — to improve seller Ads performance'}</li>
+                        <li>{i18n.language === 'bn' ? 'Trackoora-এর service প্রদান এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora service this is the sole purpose'}</li>
+                        <li>{i18n.language === 'bn' ? 'Meta Algorithm-এ sale signal ও সেলারের Ads performance উন্নত করতে' : 'Sale signals to Meta Algorithm to improve seller Ads performance'}</li>
                         <li>{i18n.language === 'bn' ? 'Ad performance dashboard তৈরি করতে Meta Ads from data pull করা' : 'Pulling data from Meta Ads to create Ad performance dashboard'}</li>
                         <li>{i18n.language === 'bn' ? 'Telegram daily report পাঠানো' : 'Sending Telegram daily reports'}</li>
-                        <li>{i18n.language === 'bn' ? 'Anonymized, aggregated data — product improvement-এর জন্য (individual চেনা যায় না এমন)' : 'Anonymized, aggregated data — for product improvement (non-identifiable)'}</li>
+                        <li>{i18n.language === 'bn' ? 'Anonymized, aggregated data product improvement-এর জন্য (individual চেনা যায় না এমন)' : 'Anonymized, aggregated data for product improvement (non-identifiable)'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৩. তৃতীয় পক্ষের সাথে তথ্য শেয়ার' : '3. Sharing information with third parties'}</h3>
@@ -1334,38 +1406,38 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '৪. তথ্য কীভাবে সুরক্ষিত রাখা হয়' : '4. How information is kept secure'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Facebook OAuth token ও সব sensitive credentials — high security encryption দিয়ে database-এ সংরক্ষিত' : 'Facebook OAuth token & all sensitive credentials — stored in database with high security encryption'}</li>
-                        <li>{i18n.language === 'bn' ? 'Customer Facebook User ID — Meta-তে পাঠানোর আগে hash করা হয়' : 'Customer Facebook User ID — hashed before sending to Meta'}</li>
-                        <li>{i18n.language === 'bn' ? 'সমস্ত connection — HTTPS/TLS দিয়ে encrypted, কোনো plain HTTP নেই' : 'All connections — encrypted with HTTPS/TLS, no plain HTTP'}</li>
-                        <li>{i18n.language === 'bn' ? 'প্রতিটি seller-এর data সম্পূর্ণ isolated — অন্য কোনো seller কখনো আপনার data দেখতে পারবে না' : "Each seller's data is completely isolated — no other seller can ever see your data"}</li>
-                        <li>{i18n.language === 'bn' ? 'High Security Protection — platform সর্বক্ষণ monitoring-এ আছে' : 'High Security Protection — platform is under constant monitoring'}</li>
-                        <li>{i18n.language === 'bn' ? 'সব admin access log করা হয় — কোনো silent action নেই' : 'All admin access is logged — no silent actions'}</li>
+                        <li>{i18n.language === 'bn' ? 'Facebook OAuth token ও সব sensitive credentials high security encryption দিয়ে database-এ সংরক্ষিত' : 'Facebook OAuth token & all sensitive credentials stored in database with high security encryption'}</li>
+                        <li>{i18n.language === 'bn' ? 'Customer Facebook User ID Meta-তে পাঠানোর আগে hash করা হয়' : 'Customer Facebook User ID hashed before sending to Meta'}</li>
+                        <li>{i18n.language === 'bn' ? 'সমস্ত connection HTTPS/TLS দিয়ে encrypted, কোনো plain HTTP নেই' : 'All connections encrypted with HTTPS/TLS, no plain HTTP'}</li>
+                        <li>{i18n.language === 'bn' ? 'প্রতিটি seller-এর data সম্পূর্ণ isolated অন্য কোনো seller কখনো আপনার data দেখতে পারবে না' : "Each seller's data is completely isolated no other seller can ever see your data"}</li>
+                        <li>{i18n.language === 'bn' ? 'High Security Protection platform সর্বক্ষণ monitoring-এ আছে' : 'High Security Protection platform is under constant monitoring'}</li>
+                        <li>{i18n.language === 'bn' ? 'সব admin access log করা হয় কোনো silent action নেই' : 'All admin access is logged no silent actions'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৫. তথ্য কতদিন সংরক্ষণ করা হয়' : '5. How long information is stored'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
                         <li>{i18n.language === 'bn' ? 'সক্রিয় account: Subscription চলাকালীন সম্পূর্ণ সময়' : 'Active account: Entire duration of subscription'}</li>
-                        <li>{i18n.language === 'bn' ? 'Cancelled account: বাতিলের ৩০ দিন পর সম্পূর্ণ মুছে ফেলা হয় — seller-কে আগে notify করা হয়' : 'Cancelled account: Completely deleted 30 days after cancellation — seller is notified beforehand'}</li>
+                        <li>{i18n.language === 'bn' ? 'Cancelled account: বাতিলের ৩০ দিন পর সম্পূর্ণ মুছে ফেলা হয় seller-কে আগে notify করা হয়' : 'Cancelled account: Completely deleted 30 days after cancellation seller is notified beforehand'}</li>
                         <li>{i18n.language === 'bn' ? 'Customer data: সেলারের account active থাকা পর্যন্ত সংরক্ষিত। Account delete হলে customer data-ও মুছে যায়' : "Customer data: Stored as long as seller's account is active. If account is deleted, customer data is also removed"}</li>
                         <li>{i18n.language === 'bn' ? 'Meta signal logs: ৯০ দিন পর automatically মুছে ফেলা হয়' : 'Meta signal logs: Automatically deleted after 90 days'}</li>
-                        <li>{i18n.language === 'bn' ? 'Application error logs: ৩০ দিন — কোনো personal data এতে থাকে না' : 'Application error logs: 30 days — contains no personal data'}</li>
+                        <li>{i18n.language === 'bn' ? 'Application error logs: ৩০ দিন কোনো personal data এতে থাকে না' : 'Application error logs: 30 days contains no personal data'}</li>
                         <li>{i18n.language === 'bn' ? 'Billing records: আইনি কারণে ৭ বছর সংরক্ষিত থাকে' : 'Billing records: Stored for 7 years for legal reasons'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৬. Cookies ও Anonymous Data' : '6. Cookies & Anonymous Data'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় — আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data — product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
-                          : 'Only essential cookies are used on the Trackoora landing page — to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
+                          ? 'Trackoora landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
+                          : 'Only essential cookies are used on the Trackoora landing page to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৭. আপনার অধিকার' : '7. Your Rights'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
                         <li>{i18n.language === 'bn' ? 'আপনার সমস্ত data দেখার অনুরোধ করতে পারবেন' : 'You can request to see all your data'}</li>
                         <li>{i18n.language === 'bn' ? 'যেকোনো সময় account delete করে সমস্ত data মুছে ফেলার অনুরোধ করতে পারবেন' : 'You can request to delete your account and all data at any time'}</li>
-                        <li>{i18n.language === 'bn' ? 'Facebook Page disconnect করতে পারবেন — তখন আমাদের Page access তাৎক্ষণিক বাতিল হয়' : 'You can disconnect your Facebook Page — our Page access is then immediately revoked'}</li>
+                        <li>{i18n.language === 'bn' ? 'Facebook Page disconnect করতে পারবেন তখন আমাদের Page access তাৎক্ষণিক বাতিল হয়' : 'You can disconnect your Facebook Page our Page access is then immediately revoked'}</li>
                         <li>{i18n.language === 'bn' ? 'Account delete করলে ৩০ দিনের মধ্যে সমস্ত data permanently মুছে যাবে' : 'If account is deleted, all data will be permanently removed within 30 days'}</li>
-                        <li>{i18n.language === 'bn' ? 'Data সংক্রান্ত যেকোনো অভিযোগ আমাদের কাছে করতে পারবেন — ৪৮ ঘণ্টার মধ্যে সাড়া দেওয়া হবে' : 'Any data-related complaints can be made to us — we will respond within 48 hours'}</li>
+                        <li>{i18n.language === 'bn' ? 'Data সংক্রান্ত যেকোনো অভিযোগ আমাদের কাছে করতে পারবেন ৪৮ ঘণ্টার মধ্যে সাড়া দেওয়া হবে' : 'Any data-related complaints can be made to us we will respond within 48 hours'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৮. বাংলাদেশ Cyber Security Act 2023' : '8. Bangladesh Cyber Security Act 2023'}</h3>
@@ -1396,7 +1468,15 @@ export default function App() {
                   </div>
               <div className="mt-8 pt-8 border-t border-border flex justify-end">
                 <button 
-                  onClick={() => navigateTo('/', 'landing')} 
+                  onClick={() => {
+                    if (previousView === 'auth') {
+                      navigateTo('/auth', 'auth');
+                    } else if (previousView === 'onboarding') {
+                      navigateTo('/onboarding', 'onboarding');
+                    } else {
+                      navigateTo('/', 'landing');
+                    }
+                  }} 
                   className="btn-secondary w-full mt-4"
                 >
                   {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
@@ -1437,9 +1517,9 @@ export default function App() {
                             : 'Trackoora is a SaaS (Software as a Service) platform built for F-Commerce sellers in Bangladesh. It provides:'}
                         </p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
-                          <li>{i18n.language === 'bn' ? 'Meta Ads attribution — Inbox-এ confirm করা প্রতিটি অর্ডার Meta Algorithm-কে জানানো' : 'Meta Ads attribution — informing Meta Algorithm of every order confirmed in Inbox'}</li>
-                          <li>{i18n.language === 'bn' ? 'Conversation Card Dashboard — Ads থেকে আসা সব message এক জায়গায় track করা' : 'Conversation Card Dashboard — tracking all messages from Ads in one place'}</li>
-                          <li>{i18n.language === 'bn' ? 'Ad Performance Report — কোন Ads থেকে কত সেল এবং কত revenue' : 'Ad Performance Report — how many sales and how much revenue from which Ads'}</li>
+                          <li>{i18n.language === 'bn' ? 'Meta Ads attribution Inbox-এ confirm করা প্রতিটি অর্ডার Meta Algorithm-কে জানানো' : 'Meta Ads attribution informing Meta Algorithm of every order confirmed in Inbox'}</li>
+                          <li>{i18n.language === 'bn' ? 'Conversation Card Dashboard Ads থেকে আসা সব message এক জায়গায় track করা' : 'Conversation Card Dashboard tracking all messages from Ads in one place'}</li>
+                          <li>{i18n.language === 'bn' ? 'Ad Performance Report কোন Ads থেকে কত সেল এবং কত revenue' : 'Ad Performance Report how many sales and how much revenue from which Ads'}</li>
                           <li>{i18n.language === 'bn' ? 'Order Status Tracker ও Auto Confirmation Message' : 'Order Status Tracker & Auto Confirmation Message'}</li>
                           <li>{i18n.language === 'bn' ? 'Telegram Daily Report' : 'Telegram Daily Report'}</li>
                         </ul>
@@ -1461,23 +1541,23 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '৩. Beta Period শর্ত' : '3. Beta Period Terms'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Beta period (প্রথম ৩০ দিন) সম্পূর্ণ বিনামূল্যে — কোনো payment card লাগবে না।' : 'Beta period (first 30 days) is completely free — no payment card required.'}</li>
-                        <li>{i18n.language === 'bn' ? 'Beta-তে যোগ দিলে আপনি honest feedback দিতে সম্মত হচ্ছেন — এটাই আমাদের শর্ত।' : 'By joining Beta, you agree to provide honest feedback — this is our condition.'}</li>
-                        <li>{i18n.language === 'bn' ? 'Beta period-এ service বা feature পরিবর্তন হতে পারে — আগে জানানো হবে।' : 'Services or features may change during the Beta period — notification will be provided beforehand.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta period (প্রথম ৩০ দিন) সম্পূর্ণ বিনামূল্যে কোনো payment card লাগবে না।' : 'Beta period (first 30 days) is completely free no payment card required.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta-তে যোগ দিলে আপনি honest feedback দিতে সম্মত হচ্ছেন এটাই আমাদের শর্ত।' : 'By joining Beta, you agree to provide honest feedback this is our condition.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta period-এ service বা feature পরিবর্তন হতে পারে আগে জানানো হবে।' : 'Services or features may change during the Beta period notification will be provided beforehand.'}</li>
                         <li>{i18n.language === 'bn' ? 'Beta data product improvement-এ anonymized আকারে ব্যবহার হতে পারে।' : 'Beta data may be used in anonymized form for product improvement.'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৪. Subscription ও Payment' : '4. Subscription & Payment'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Beta শেষে Starter Plan: ৳৪৯৯/মাস — bKash বা Nagad দিয়ে payment।' : 'Starter Plan after Beta: ৳499/month — payment via bKash or Nagad.'}</li>
-                        <li>{i18n.language === 'bn' ? 'মাসিক billing cycle — কোনো annual contract বা hidden charge নেই।' : 'Monthly billing cycle — no annual contract or hidden charges.'}</li>
-                        <li>{i18n.language === 'bn' ? 'Payment না করলে grace period ৩ দিন — তারপর account suspend হবে।' : 'If payment is not made, grace period is 3 days — then account will be suspended.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta শেষে Starter Plan: ৳৪৯৯/মাস bKash বা Nagad দিয়ে payment।' : 'Starter Plan after Beta: ৳499/month payment via bKash or Nagad.'}</li>
+                        <li>{i18n.language === 'bn' ? 'মাসিক billing cycle কোনো annual contract বা hidden charge নেই।' : 'Monthly billing cycle no annual contract or hidden charges.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Payment না করলে grace period ৩ দিন তারপর account suspend হবে।' : 'If payment is not made, grace period is 3 days then account will be suspended.'}</li>
                         <li>{i18n.language === 'bn' ? 'Pricing পরিবর্তন হলে ১৪ দিন আগে notify করা হবে।' : 'Pricing changes will be notified 14 days in advance.'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৫. Cancellation ও Refund' : '5. Cancellation & Refund'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'যেকোনো সময় cancel করা যাবে — পরবর্তী billing cycle-এ charge হবে না।' : 'Can be cancelled at any time — no charge for the next billing cycle.'}</li>
+                        <li>{i18n.language === 'bn' ? 'যেকোনো সময় cancel করা যাবে পরবর্তী billing cycle-এ charge হবে না।' : 'Can be cancelled at any time no charge for the next billing cycle.'}</li>
                         <li>{i18n.language === 'bn' ? 'Cancel করলে current billing period শেষ পর্যন্ত access থাকবে।' : 'If cancelled, access remains until the end of the current billing period.'}</li>
                         <li>{i18n.language === 'bn' ? 'Cancel-এর ৩০ দিন পর সমস্ত data permanently মুছে ফেলা হবে।' : 'All data will be permanently deleted 30 days after cancellation.'}</li>
                         <li>{i18n.language === 'bn' ? 'Technical সমস্যার কারণে ২৪ ঘণ্টার বেশি service unavailable হলে আনুপাতিক credit দেওয়া হবে।' : 'Proportional credit will be given if service is unavailable for more than 24 hours due to technical issues.'}</li>
@@ -1487,15 +1567,15 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৬. Service Availability' : '6. Service Availability'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে — planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
-                          : 'Trackoora aims for 99%+ uptime. However, temporary interruptions may occur due to — planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
+                          ? 'Trackoora ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
+                          : 'Trackoora aims for 99%+ uptime. However, temporary interruptions may occur due to planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৭. Intellectual Property' : '7. Intellectual Property'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora platform, এর design, code, content, এবং brand — এগুলো Trackoora-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
-                          : 'Trackoora platform, its design, code, content, and brand — these are the intellectual property of Trackoora. You get the right to use the service, not ownership. You own your business data.'}
+                          ? 'Trackoora platform, এর design, code, content, এবং brand এগুলো Trackoora-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
+                          : 'Trackoora platform, its design, code, content, and brand these are the intellectual property of Trackoora. You get the right to use the service, not ownership. You own your business data.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৮. Account Responsibility' : '8. Account Responsibility'}</h3>
@@ -1508,15 +1588,15 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৯. Limitation of Liability' : '9. Limitation of Liability'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora Meta Ads-এর performance guarantee করে না — আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
-                          : 'Trackoora does not guarantee Meta Ads performance — we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
+                          ? 'Trackoora Meta Ads-এর performance guarantee করে না আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
+                          : 'Trackoora does not guarantee Meta Ads performance we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '১০. Account Termination' : '10. Account Termination'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'নিম্নলিখিত কারণে Trackoora account বন্ধ করতে পারে — Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
-                          : 'Trackoora may close an account for the following reasons — Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
+                          ? 'নিম্নলিখিত কারণে Trackoora account বন্ধ করতে পারে Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
+                          : 'Trackoora may close an account for the following reasons Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '১১. Terms পরিবর্তন' : '11. Terms Changes'}</h3>
@@ -1532,12 +1612,20 @@ export default function App() {
                     </div>
                   </div>
               <div className="mt-8 pt-8 border-t border-border flex justify-end">
-                <button 
-                  onClick={() => navigateTo('/', 'landing')} 
-                  className="bg-bg3 text-text w-full py-3.5 rounded-xl font-bold border border-border hover:border-orange transition-all mt-4"
-                >
-                  {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
-                </button>
+                  <button 
+                    onClick={() => {
+                      if (previousView === 'auth') {
+                        navigateTo('/auth', 'auth');
+                      } else if (previousView === 'onboarding') {
+                        navigateTo('/onboarding', 'onboarding');
+                      } else {
+                        navigateTo('/', 'landing');
+                      }
+                    }} 
+                    className="btn-secondary w-full py-3.5 mt-4"
+                  >
+                    {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
+                  </button>
               </div>
             </div>
           </div>
@@ -1598,9 +1686,9 @@ export default function App() {
                     </div>
                     
                     <div className="px-3 mt-2 border-t border-border pt-3 pb-1">
-                      <button onClick={() => { setIsMenuOpen(false); handleAuthClick('signup'); }} className="w-full bg-orange text-white py-2.5 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange/20">
+                      <button onClick={() => { setIsMenuOpen(false); handleAuthClick('signup'); }} className="w-full bg-orange text-white py-2.5 rounded-full font-bold text-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange/20">
                         {i18n.language === 'bn' ? 'শুরু করুন' : 'Get Started'}
-                        <ArrowRight className="w-4 h-4" />
+                        
                       </button>
                     </div>
                   </motion.div>
@@ -1622,7 +1710,7 @@ export default function App() {
             <button onClick={() => handleAuthClick('login')} className="hidden md:flex text-sm font-bold hover:text-orange transition-colors">
               {i18n.language === 'bn' ? 'লগইন' : 'Login'}
             </button>
-            <button onClick={() => handleAuthClick('signup')} className="hidden md:flex bg-orange text-white px-4 py-2 rounded-xl text-sm font-bold hover:scale-105 transition-all shadow-md shadow-orange/20">
+            <button onClick={() => handleAuthClick('signup')} className="hidden md:flex bg-orange text-white px-4 py-2 rounded-full text-sm font-bold hover:scale-105 transition-all shadow-md shadow-orange/20">
               {i18n.language === 'bn' ? 'শুরু করুন' : 'Get Started'}
             </button>
           </div>
@@ -1638,14 +1726,14 @@ export default function App() {
         <div className="hero-orb-l"></div>
         <div className="hero-orb-r"></div>
         <div className="hero-grid"></div>
-        <div className="container hero-content">
+        <div className="container hero-content text-left">
           <div className="hero-badge">
             <span className="badge-dot"></span>
             🇧🇩 {i18n.language === 'bn' ? 'বাংলাদেশের F-Commerce সেলারদের জন্য তৈরি' : 'Built for F-Commerce Sellers in Bangladesh'}
           </div>
           <h1>
-            {i18n.language === 'bn' ? 'আপনি Inbox-এ অর্ডার পাচ্ছেন —' : 'You are getting orders in Inbox —'}
-            <span className="line2">{i18n.language === 'bn' ? 'কিন্তু Meta জানেই না আপনি sell করছেন' : "But Meta doesn't even know you're selling"}</span>
+            {i18n.language === 'bn' ? 'আপনি Inbox-এ অর্ডার পাচ্ছেন' : 'You are getting orders in Inbox'}
+            <span className="line2">{i18n.language === 'bn' ? 'কিন্তু Meta জানেই না আপনি sell করছেন!' : "But Meta doesn't even know you're selling!"}</span>
           </h1>
 
           <div className="alert-box-hero">
@@ -1656,26 +1744,26 @@ export default function App() {
           <p className="hero-sub">
             {i18n.language === 'bn' ? (
               <>
-                তাই Meta ভুল মানুষকে Ads দেখাচ্ছে — যারা message করে কিন্তু কেনে না। বাজেট বাড়ছে, সঠিক customer আসছে না।
+                তাই Meta ভুল মানুষকে Ads দেখাচ্ছে যারা ম্যাসেজ করে কিন্তু কেনে না। বাজেট বাড়ছে, সঠিক customer আসছে না।
                 <br /><br />
                 <span className="hero-highlight">
-                  Trackoora প্রতিটি Inbox অর্ডারকে সরাসরি Meta-তে পাঠায়। Meta শেখে কে আসলে কেনে — এবং তাদের কাছেই Ads যায়। একই বাজেটে সেল বাড়ে ২-৩ গুণ।
+                  Trackoora প্রতিটি Inbox অর্ডারকে সরাসরি Meta-তে পাঠায়। Meta শেখে কে আসলে কেনে এবং তাদের কাছেই Ads যায়। একই বাজেটে সেল বাড়ে ২-৩ গুণ।
                 </span>
               </>
             ) : (
               <>
-                That's why Meta shows ads to the wrong people — those who message but don't buy. Budget increases, but the right customers don't come.
+                That's why Meta shows ads to the wrong people those who message but don't buy. Budget increases, but the right customers don't come.
                 <br /><br />
                 <span className="hero-highlight">
-                  Trackoora sends every Inbox order directly to Meta. Meta learns who actually buys — and shows ads to them. Sales increase 2-3x for the same budget.
+                  Trackoora sends every Inbox order directly to Meta. Meta learns who actually buys and shows ads to them. Sales increase 2-3x for the same budget.
                 </span>
               </>
             )}
           </p>
-          <div className="hero-actions">
-            <button onClick={() => handleAuthClick('signup')} className="btn-primary large">
+          <div className="hero-actions justify-start">
+            <button onClick={() => handleAuthClick('signup')} className="btn-primary large beep-slow">
               {i18n.language === 'bn' ? 'আপনার Ads ঠিক করতে এখনই শুরু করুন' : 'Start fixing your Ads now'}
-              <ArrowRight className="w-5 h-5" />
+              
             </button>
           </div>
           <div className="hero-trust">
@@ -1724,9 +1812,9 @@ export default function App() {
           <div className="pain-intro">
             <span className="section-label">{i18n.language === 'bn' ? 'আপনি কি এই সমস্যায় আছেন?' : 'Are you facing these problems?'}</span>
             <h2 className="section-title">
-              {i18n.language === 'bn' ? <>আপনি কাজ করছেন —<br/>কিন্তু system আপনাকে grow করতে দিচ্ছে না</> : <>You are working hard —<br/>But the system isn't letting you grow</>}
+              {i18n.language === 'bn' ? <>আপনি কাজ করছেন, কিন্তু system আপনাকে grow করতে দিচ্ছে না?</> : <>You are working hard, but the system isn't letting you grow?</>}
             </h2>
-            <p className="section-sub">{i18n.language === 'bn' ? 'F-Commerce seller-দের সবচেয়ে বড় ৩টা সমস্যা — যেগুলো আপনিও প্রতিদিন feel করছেন।' : 'The 3 biggest problems for F-Commerce sellers — that you feel every day.'}</p>
+            <p className="section-sub">{i18n.language === 'bn' ? 'F-Commerce seller-দের সবচেয়ে বড় ৩টা সমস্যা যেগুলো আপনিও প্রতিদিন feel করছেন।' : 'The 3 biggest problems for F-Commerce sellers that you feel every day.'}</p>
           </div>
 
           <div className="pain-grid">
@@ -1738,13 +1826,13 @@ export default function App() {
               className="pain-card glowing-card"
             >
               <TrendingUp className="w-10 h-10 text-red mb-4" />
-              <h3>{i18n.language === 'bn' ? 'Ads চালাচ্ছেন, মেসেজ আসছে — কিন্তু সেল কম' : "Running Ads, getting messages — but low sales"}</h3>
+              <h3>{i18n.language === 'bn' ? 'Ads চালাচ্ছেন, ম্যাসেজ আসছে কিন্তু সেল কম' : "Running Ads, getting messages but low sales"}</h3>
               <p>
                 {i18n.language === 'bn' ? (
                   <>
-                    মেসেজ আসছে, কথা হচ্ছে, কিছু অর্ডারও হচ্ছে। কিন্তু যত মেসেজ আসছে তার তুলনায় সেল অনেক কম।
+                    ম্যাসেজ আসছে, কথা হচ্ছে, কিছু অর্ডারও হচ্ছে। কিন্তু যত ম্যাসেজ আসছে তার তুলনায় সেল অনেক কম।
                     <br /><br />
-                    কারণটা হলো — Meta জানে না আপনার কাছ থেকে কারা সত্যিকারে কিনেছে। Algorithm শুধু দেখছে "মেসেজ হয়েছে।" Purchase হয়েছে কিনা — সেটা জানে না। তাই সে এমন মানুষদের কাছে Ads পাঠাতে থাকে যারা message করে কিন্তু কেনে না।
+                    কারণটা হলো Meta জানে না আপনার কাছ থেকে কারা সত্যিকারে কিনেছে। Algorithm শুধু দেখছে "ম্যাসেজ হয়েছে।" Purchase হয়েছে কিনা সেটা জানে না। তাই সে এমন মানুষদের কাছে Ads পাঠাতে থাকে যারা ম্যাসেজ করে কিন্তু কেনে না।
                     <br /><br />
                     আপনি টাকা দিচ্ছেন ভুল মানুষের পেছনে প্রতিমাসে।
                   </>
@@ -1752,14 +1840,14 @@ export default function App() {
                   <>
                     Messages are coming, conversations are happening, some orders too. But sales are very low compared to the number of messages.
                     <br /><br />
-                    The reason is — Meta doesn't know who actually bought from you. The algorithm only sees "Message happened." It doesn't know if a purchase occurred. So it keeps sending ads to people who message but don't buy.
+                    The reason is Meta doesn't know who actually bought from you. The algorithm only sees "Message happened." It doesn't know if a purchase occurred. So it keeps sending ads to people who message but don't buy.
                     <br /><br />
                     You are spending money on the wrong people every month.
                   </>
                 )}
               </p>
               <div className="alert-box mt-4 mb-0 w-full">
-                {i18n.language === 'bn' ? 'এটা Ads-এর সমস্যা না — এটা invisible sales-এর সমস্যা' : 'This is not an Ads problem — it\'s an invisible sales problem'}
+                {i18n.language === 'bn' ? 'এটা Ads-এর সমস্যা না এটা invisible sales-এর সমস্যা' : 'This is not an Ads problem it\'s an invisible sales problem'}
               </div>
             </motion.div>
             <motion.div 
@@ -1770,13 +1858,13 @@ export default function App() {
               className="pain-card glowing-card"
             >
               <Clock className="w-10 h-10 text-orange mb-4" />
-              <h3>{i18n.language === 'bn' ? 'রাত ১২টায় বসে আছেন — তবুও কাজ শেষ হচ্ছে না' : "Sitting at 12 AM — but work isn't finishing"}</h3>
+              <h3>{i18n.language === 'bn' ? 'রাত ১২টায় বসে আছেন তবুও কাজ শেষ হচ্ছে না' : "Sitting at 12 AM but work isn't finishing"}</h3>
               <p>
                 {i18n.language === 'bn' ? (
                   <>
-                    সারাদিন মেসেজের জবাব দিয়েছেন, বিকেলে অর্ডার নিয়েছেন, রাতে Spreadsheet খুলে দেখছেন ৩টা অর্ডার miss হয়ে গেছে।
+                    সারাদিন ম্যাসেজের জবাব দিয়েছেন, বিকেলে অর্ডার নিয়েছেন, রাতে Spreadsheet খুলে দেখছেন ৩টা অর্ডার miss হয়ে গেছে।
                     <br /><br />
-                    একজন customer confirmation পাননি — রাগ করে চলে গেছে। যে কিনতে চেয়েছিল কিন্তু কেনেনি — তাকে follow up দেওয়ার কথাই মনে ছিল না।
+                    একজন customer confirmation পাননি রাগ করে চলে গেছে। যে কিনতে চেয়েছিল কিন্তু কেনেনি তাকে follow up দেওয়ার কথাই মনে ছিল না।
                     <br /><br />
                     এই একই ভুল প্রতিদিন এবং প্রতিদিনই কিছু না কিছু হাতছাড়া হচ্ছে।
                   </>
@@ -1784,14 +1872,14 @@ export default function App() {
                   <>
                     Replied to messages all day, took orders in the afternoon, opening the spreadsheet at night to find 3 orders missed.
                     <br /><br />
-                    One customer didn't get confirmation — left in anger. Forgot to follow up with someone who wanted to buy but didn't.
+                    One customer didn't get confirmation left in anger. Forgot to follow up with someone who wanted to buy but didn't.
                     <br /><br />
                     The same mistake every day, and every day something is slipping away.
                   </>
                 )}
               </p>
               <div className="alert-box mt-4 mb-0 w-full">
-                {i18n.language === 'bn' ? 'সমস্যা আপনার না — system নেই বলেই হচ্ছে' : 'Problem isn\'t you — it\'s the lack of a system'}
+                {i18n.language === 'bn' ? 'সমস্যা আপনার না system নেই বলেই হচ্ছে' : 'Problem isn\'t you it\'s the lack of a system'}
               </div>
             </motion.div>
             <motion.div 
@@ -1802,13 +1890,13 @@ export default function App() {
               className="pain-card glowing-card"
             >
               <BarChart3 className="w-10 h-10 text-cyan mb-4" />
-              <h3>{i18n.language === 'bn' ? 'কোন Ads কাজ করছে — নিজেও জানেন না' : "Which Ads are working — you don't even know"}</h3>
+              <h3>{i18n.language === 'bn' ? 'কোন Ads কাজ করছে নিজেও জানেন না' : "Which Ads are working you don't even know"}</h3>
               <p>
                 {i18n.language === 'bn' ? (
                   <>
                     "Summer Collection" ভালো করছে নাকি "New Arrival"? সত্যিকারের উত্তর কি আছে আপনার কাছে?
                     <br /><br />
-                    শুধু মেসেজ count দেখে সিদ্ধান্ত নিচ্ছেন। Ads-এর budget বাড়াবেন কি না — সেটা অনুমানে ঠিক করছেন।
+                    শুধু ম্যাসেজ count দেখে সিদ্ধান্ত নিচ্ছেন। Ads-এর budget বাড়াবেন কি না সেটা অনুমানে ঠিক করছেন।
                     <br /><br />
                     ফলে যে Ads আসলে সেল আনছে সেটা চিনতে পারছেন না। যেটা টাকা নষ্ট করছে সেটাও বন্ধ হচ্ছে না।
                   </>
@@ -1828,10 +1916,10 @@ export default function App() {
             </motion.div>
           </div>
 
-          <div className="info-box animate-beeping">
+          <div className="info-box">
             {i18n.language === 'bn' 
-              ? 'Meta যদি না জানে আপনি sale করছেন — তাহলে সে কখনো সঠিক buyer খুঁজে দিতে পারবে না।' 
-              : 'If Meta doesn\'t know you are making sales — it can never find the right buyer for you.'}
+              ? 'Meta যদি না জানে আপনি sale করছেন তাহলে সে কখনো সঠিক buyer খুঁজে দিতে পারবে না।' 
+              : 'If Meta doesn\'t know you are making sales it can never find the right buyer for you.'}
           </div>
         </div>
       </motion.section>
@@ -1845,15 +1933,15 @@ export default function App() {
       >
         <div className="container">
           <span className="section-label">{i18n.language === 'bn' ? 'আপনি হয়তো ভাবছেন...' : 'You might be thinking...'}</span>
-          <h2 className="section-title" style={{maxWidth: '600px'}}>{i18n.language === 'bn' ? 'Website বা Pixel ছাড়া Tracking — এটা কি আসলে সম্ভব?' : 'Tracking without Website or Pixel — Is it really possible?'}</h2>
+          <h2 className="section-title" style={{maxWidth: '600px'}}>{i18n.language === 'bn' ? 'Website বা Pixel ছাড়া Tracking এটা কি আসলে সম্ভব?' : 'Tracking without Website or Pixel, is it really possible?'}</h2>
 
           <div className="objection-box" style={{marginTop: '44px'}}>
             <div className="objection-header">
               <h3>{i18n.language === 'bn' ? 'সত্যিটা হলো' : 'The Truth Is'}</h3>
-              <p>{i18n.language === 'bn' ? 'এটাই সবচেয়ে স্বাভাবিক প্রশ্ন। এবং উত্তরটা আপনাকে অবাক করবে।' : 'This is the most natural question. And the answer will surprise you.'}</p>
+              <p>{i18n.language === 'bn' ? 'এটাই সবচেয়ে স্বাভাবিক প্রশ্ন এবং উত্তরটা আপনাকে অবাক করবে।' : 'This is the most natural question and the answer will surprise you.'}</p>
             </div>
             <div className="objection-body">
-              <p>{i18n.language === 'bn' ? 'Pixel লাগে website-এর জন্য। আপনার business Messenger-এ — তাই Pixel কোনোদিনও আপনার কাজে আসতো না। Trackoora সম্পূর্ণ আলাদাভাবে কাজ করে — শুধু F-Commerce-এর জন্য, শুধু Messenger-এর জন্য।' : 'Pixel is for websites. Your business is on Messenger — so Pixel would never work for you. Trackoora works completely differently — specifically for F-Commerce and Messenger.'}</p>
+              <p>{i18n.language === 'bn' ? 'Pixel লাগে website-এর জন্য। আপনার business Messenger-এ তাই Pixel কোনোদিনও আপনার কাজে আসতো না। Trackoora সম্পূর্ণ আলাদাভাবে কাজ করে শুধু F-Commerce-এর জন্য, শুধু Messenger-এর জন্য।' : 'Pixel is for websites. Your business is on Messenger so Pixel would never work for you. Trackoora works completely differently specifically for F-Commerce and Messenger.'}</p>
               
               <div className="flow-box">
                 <div className="flow-title">{i18n.language === 'bn' ? 'প্রতিটি অর্ডারে যা হয়' : 'What happens with every order'}</div>
@@ -1862,7 +1950,7 @@ export default function App() {
                     <div className="flow-connector"><div className="flow-dot animate-floating"><MousePointerClick className="w-4 h-4 text-cyan" /></div><div className="flow-line"></div></div>
                     <div className="flow-step-text">
                       <strong>{i18n.language === 'bn' ? 'কেউ আপনার Ads দেখে "Message" ক্লিক করল' : 'Someone clicks "Message" on your Ad'}</strong>
-                      <span>{i18n.language === 'bn' ? 'Meta তখনই Trackoora-কে জানায় — কে এলো, কোন Ads থেকে এলো' : 'Meta immediately notifies Trackoora — who came, from which Ad'}</span>
+                      <span>{i18n.language === 'bn' ? 'Meta তখনই Trackoora-কে জানায় কে এলো, কোন Ads থেকে এলো' : 'Meta immediately notifies Trackoora who came, from which Ad'}</span>
                     </div>
                   </div>
                   <div className="flow-step">
@@ -1876,7 +1964,7 @@ export default function App() {
                     <div className="flow-connector"><div className="flow-dot animate-floating" style={{animationDelay: '1s'}}><ShoppingBag className="w-4 h-4 text-cyan" /></div><div className="flow-line"></div></div>
                     <div className="flow-step-text">
                       <strong>{i18n.language === 'bn' ? 'Trackoora-তে "অর্ডার হয়েছে" ক্লিক করলেন' : 'You click "Order Confirmed" in Trackoora'}</strong>
-                      <span>{i18n.language === 'bn' ? 'Meta জানলো — "এই মানুষটা কিনেছে"' : 'Meta knows — "This person bought something"'}</span>
+                      <span>{i18n.language === 'bn' ? 'Meta জানলো "এই মানুষটা কিনেছে"' : 'Meta knows "This person bought something"'}</span>
                     </div>
                   </div>
                   <div className="flow-step">
@@ -1905,8 +1993,8 @@ export default function App() {
       >
         <div className="container">
           <span className="section-label">{i18n.language === 'bn' ? 'আগে ও পরে' : 'Before & After'}</span>
-          <h2 className="section-title">{i18n.language === 'bn' ? <>Trackoora ব্যবহার করলে<br/>কী পরিবর্তন আসতে পারে</> : <>What changes can happen<br/>using Trackoora</>}</h2>
-          <p className="section-sub">{i18n.language === 'bn' ? 'এই পরিবর্তনটা আসে একটাই কারণে — Meta এখন জানে কে আসলে কেনে। তারপর সে নিজেই সঠিক কাস্টমার খুঁজে নেয়।' : 'This change happens for one reason — Meta now knows who actually buys. Then it finds the right customers itself.'}</p>
+          <h2 className="section-title">{i18n.language === 'bn' ? <>Trackoora ব্যবহার করলে কী পরিবর্তন আসতে পারে</> : <>What changes can happen using Trackoora</>}</h2>
+          <p className="section-sub">{i18n.language === 'bn' ? 'এই পরিবর্তনটা আসে একটই কারণে Meta এখন জানে কে আসলে কেনে। তারপর সে নিজেই সঠিক কাস্টমার খুঁজে নেয়।' : 'This change happens for one reason Meta now knows who actually buys. Then it finds the right customers itself.'}</p>
 
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
@@ -1918,32 +2006,34 @@ export default function App() {
             <div className="proof-header">
               <div className="proof-avatar">👗</div>
               <div className="proof-meta">
-                <strong>{i18n.language === 'bn' ? 'একজন Fashion F-Commerce সেলার — আগে ও পরে' : 'A Fashion F-Commerce Seller — Before & After'}</strong>
+                <strong>{i18n.language === 'bn' ? 'একজন Fashion F-Commerce সেলার আগে ও পরে' : 'A Fashion F-Commerce Seller Before & After'}</strong>
                 <span>{i18n.language === 'bn' ? 'Trackoora ব্যবহারের আগে এবং কয়েক মাস পরে' : 'Before and a few months after using Trackoora'}</span>
               </div>
             </div>
             <div className="proof-body">
               <div className="proof-col">
-                <div className="proof-col-label bad">{i18n.language === 'bn' ? '❌ Trackoora ব্যবহারের আগে' : '❌ Before Trackoora'}</div>
-                <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'Ads-এ টাকা যাচ্ছে, কিন্তু Meta জানে না কে কিনছে' : 'Money going to Ads, but Meta doesn\'t know who buys'}</div>
-                <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? '১০০ মেসেজ আসছে, কিনছে ১০-১৫ জন — বাকিদের পেছনে টাকা নষ্ট' : '100 messages coming, 10-15 buying — money wasted on the rest'}</div>
-                <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'COD ফেরত আসছে — কিন্তু কোন Ads থেকে এই buyers আসছে জানা নেই' : 'COD returns coming — but don\'t know which Ads these buyers came from'}</div>
-                <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'কোন Ads কাজ করছে — অনুমানে সিদ্ধান্ত নিচ্ছেন' : 'Which Ads work — deciding based on guesswork'}</div>
-                <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'অর্ডার miss হচ্ছে, follow-up দেওয়া হচ্ছে না' : 'Orders missed, follow-ups not given'}</div>
-                <div className="proof-item"><span className="proof-item-icon">❌</span> {i18n.language === 'bn' ? 'Real profit কত — জানার কোনো উপায় নেই' : 'Real profit — no way to know'}</div>
+                <div className="proof-col-label bad inline-flex items-center px-4 py-1.5 rounded-full bg-red/10 border border-red/20 mb-6">{i18n.language === 'bn' ? 'ব্যবহারের আগে' : 'Before Trackoora'}</div>
+
+                <div className="proof-item"><span className="proof-item-icon"><AlertTriangle className="w-4 h-4 text-red" /></span> {i18n.language === 'bn' ? 'Ads-এ টাকা যাচ্ছে, কিন্তু Meta জানে না কে কিনছে' : 'Money going to Ads, but Meta doesn\'t know who buys'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><AlertTriangle className="w-4 h-4 text-red" /></span> {i18n.language === 'bn' ? '১০০ ম্যাসেজ আসছে, কিনছে ১০-১৫ জন বাকিদের পেছনে টাকা নষ্ট' : '100 messages coming, 10-15 buying money wasted on the rest'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><AlertTriangle className="w-4 h-4 text-red" /></span> {i18n.language === 'bn' ? 'COD ফেরত আসছে কিন্তু কোন Ads থেকে এই buyers আসছে জানা নেই' : 'COD returns coming but don\'t know which Ads these buyers came from'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><AlertTriangle className="w-4 h-4 text-red" /></span> {i18n.language === 'bn' ? 'কোন Ads কাজ করছে অনুমানে সিদ্ধান্ত নিচ্ছেন' : 'Which Ads work deciding based on guesswork'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><AlertTriangle className="w-4 h-4 text-red" /></span> {i18n.language === 'bn' ? 'অর্ডার miss হচ্ছে, follow-up দেওয়া হচ্ছে না' : 'Orders missed, follow-ups not given'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><AlertTriangle className="w-4 h-4 text-red" /></span> {i18n.language === 'bn' ? 'Real profit কত জানার কোনো উপায় নেই' : 'Real profit no way to know'}</div>
               </div>
               <div className="proof-col">
-                <div className="proof-col-label good">{i18n.language === 'bn' ? '✅ Trackoora ব্যবহারের পরে' : '✅ After Trackoora'}</div>
-                <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'প্রতিটি অর্ডার confirm করলে Meta জানে — এই মানুষটা কিনেছে' : 'Confirming every order lets Meta know — this person bought'}</div>
-                <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'Algorithm ধীরে ধীরে সেই ধরনের মানুষকেই Ads দেখাতে শুরু করে' : 'Algorithm slowly starts showing ads to similar people'}</div>
-                <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'কোন Ads কাজ করছে, কোনটা টাকা নষ্ট করছে — Dashboard-এ দেখুন' : 'See which Ads work and which waste money in the Dashboard'}</div>
-                <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'সব অর্ডার একটি জায়গায় — miss হওয়ার সুযোগ নেই' : 'All orders in one place — no chance to miss'}</div>
-                <div className="proof-item"><span className="proof-item-icon">✅</span> {i18n.language === 'bn' ? 'Customer automatically confirmation পায় — আপনাকে টাইপ করতে হয় না' : 'Customer gets auto confirmation — you don\'t have to type'}</div>
+                <div className="proof-col-label good inline-flex items-center px-4 py-1.5 rounded-full bg-green/10 border border-green/20 mb-6">{i18n.language === 'bn' ? 'ব্যবহারের পরে' : 'After Trackoora'}</div>
+
+                <div className="proof-item"><span className="proof-item-icon"><CheckCircle2 className="w-4 h-4 text-green" /></span> {i18n.language === 'bn' ? 'প্রতিটি অর্ডার confirm করলে Meta জানে এই মানুষটা কিনেছে' : 'Confirming every order lets Meta know this person bought'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><CheckCircle2 className="w-4 h-4 text-green" /></span> {i18n.language === 'bn' ? 'Algorithm ধীরে ধীরে সেই ধরনের মানুষকেই Ads দেখাতে শুরু করে' : 'Algorithm slowly starts showing ads to similar people'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><CheckCircle2 className="w-4 h-4 text-green" /></span> {i18n.language === 'bn' ? 'কোন Ads কাজ করছে, কোনটা টাকা নষ্ট করছে Dashboard-এ দেখুন' : 'See which Ads work and which waste money in the Dashboard'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><CheckCircle2 className="w-4 h-4 text-green" /></span> {i18n.language === 'bn' ? 'সব অর্ডার একটি জায়গায় miss হওয়ার সুযোগ নেই' : 'All orders in one place no chance to miss'}</div>
+                <div className="proof-item"><span className="proof-item-icon"><CheckCircle2 className="w-4 h-4 text-green" /></span> {i18n.language === 'bn' ? 'Customer automatically confirmation পায় আপনাকে টাইপ করতে হয় না' : 'Customer gets auto confirmation you don\'t have to type'}</div>
                 <div className="proof-highlight">
                   {i18n.language === 'bn' ? (
-                    <>🎯 একই বাজেটে বেশি সঠিক কাস্টমার আসে।<br/>কারণ এবার Meta জানে — আপনার কাছ থেকে কারা সত্যিকারে কেনে।</>
+                    <>🎯 একই বাজেটে বেশি সঠিক কাস্টমার আসে। কারণ এবার Meta জানে আপনার কাছ থেকে কারা সত্যিকারে কেনে।</>
                   ) : (
-                    <>🎯 More right customers for the same budget.<br/>Because now Meta knows — who actually buys from you.</>
+                    <>🎯 More right customers for the same budget. Because now Meta knows who actually buys from you.</>
                   )}
                 </div>
               </div>
@@ -1963,7 +2053,7 @@ export default function App() {
         <div className="container">
           <div style={{textAlign: 'center'}}>
             <span className="section-label">{i18n.language === 'bn' ? 'কীভাবে কাজ করে?' : 'How it works?'}</span>
-            <h2 className="section-title">{i18n.language === 'bn' ? <>একবার setup — তারপর<br/>প্রতিটি অর্ডারে automatic</> : <>One-time setup — then<br/>automatic for every order</>}</h2>
+            <h2 className="section-title">{i18n.language === 'bn' ? <>একবার setup তারপর<br/>প্রতিটি অর্ডারে automatic</> : <>One-time setup then<br/>automatic for every order</>}</h2>
             <p className="section-sub" style={{margin: '0 auto'}}>{i18n.language === 'bn' ? 'কোনো ওয়েবসাইট লাগবে না। কোনো technical জ্ঞান লাগবে না।' : 'No website needed. No technical knowledge needed.'}</p>
           </div>
 
@@ -1977,7 +2067,7 @@ export default function App() {
             >
               <div className="step-num">১</div>
               <h3>{i18n.language === 'bn' ? 'Facebook Page কানেক্ট করুন' : 'Connect Facebook Page'}</h3>
-              <p>{i18n.language === 'bn' ? 'Trackoora-এ sign up করুন, Facebook Page লিঙ্ক করুন। Guided setup — মাত্র ৫ মিনিট। একবারই করতে হবে।' : 'Sign up for Trackoora, link your Facebook Page. Guided setup — just 5 minutes. Only needs to be done once.'}</p>
+              <p>{i18n.language === 'bn' ? 'Trackoora-এ sign up করুন, Facebook Page লিঙ্ক করুন। Guided setup মাত্র ৫ মিনিট। একবারই করতে হবে।' : 'Sign up for Trackoora, link your Facebook Page. Guided setup just 5 minutes. Only needs to be done once.'}</p>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, y: 50 }}
@@ -1987,7 +2077,7 @@ export default function App() {
               className="step-card"
             >
               <div className="step-num">২</div>
-              <h3>{i18n.language === 'bn' ? 'Ads থেকে মেসেজ এলে Card আসে' : 'Card comes when Ad message arrives'}</h3>
+              <h3>{i18n.language === 'bn' ? 'Ads থেকে ম্যাসেজ এলে Card আসে' : 'Card comes when Ad message arrives'}</h3>
               <p>{i18n.language === 'bn' ? 'কেউ Ads থেকে message করলে Trackoora automatically সেই customer ও কোন Ads থেকে এলো সেই তথ্য সহ একটি card তৈরি করে।' : 'When someone messages from an Ad, Trackoora automatically creates a card with customer info and Ad source.'}</p>
             </motion.div>
             <motion.div 
@@ -2015,20 +2105,21 @@ export default function App() {
         <div className="container">
           <div style={{textAlign: 'center'}}>
             <span className="section-label">{i18n.language === 'bn' ? 'Starter Plan-এ যা পাবেন' : 'What you get in Starter Plan'}</span>
-            <h2 className="section-title">{i18n.language === 'bn' ? <>F-Commerce সেলারের সবচেয়ে<br/>জরুরি ৮টি ফিচার — একটি জায়গায়</> : <>8 most essential features for<br/>F-Commerce sellers — in one place</>}</h2>
-            <p className="section-sub" style={{margin: '0 auto'}}>{i18n.language === 'bn' ? 'কোনো technical কাজ নেই। শুধু connect করুন — সব automatic।' : 'No technical work. Just connect — everything is automatic.'}</p>
+            <h2 className="section-title">{i18n.language === 'bn' ? <>F-Commerce সেলারের সবচেয়ে<br/>জরুরি ৯টি ফিচার একটি জায়গায়</> : <>9 most essential features for<br/>F-Commerce sellers in one place</>}</h2>
+            <p className="section-sub" style={{margin: '0 auto'}}>{i18n.language === 'bn' ? 'কোনো technical কাজ নেই। শুধু connect করুন সব automatic।' : 'No technical work. Just connect everything is automatic.'}</p>
           </div>
 
           <div className="feature-grid">
             {[
-              { icon: Activity, titleBn: 'Meta Algorithm Signal', titleEn: 'Meta Algorithm Signal', descBn: 'প্রতিটি Inbox অর্ডার Meta-কে জানায় — সঠিক কাস্টমার খুঁজে পায়', descEn: 'Notifies Meta of every Inbox order — finds the right customer' },
-              { icon: LayoutDashboard, titleBn: 'Conversation Dashboard', titleEn: 'Conversation Dashboard', descBn: 'Ads থেকে আসা সব message একটি জায়গায় — status সহ', descEn: 'All messages from Ads in one place — with status' },
-              { icon: BarChart2, titleBn: 'Ad Performance Report', titleEn: 'Ad Performance Report', descBn: 'কোন Ads থেকে কত সেল, কত টাকা রেভেনিউ — সরাসরি দেখুন', descEn: 'See directly how many sales and how much revenue from each Ad' },
-              { icon: Bot, titleBn: 'Auto Confirmation Message', titleEn: 'Auto Confirmation Message', descBn: 'অর্ডার confirm করলে customer-কে automatic Messenger message', descEn: 'Automatic Messenger message to customer when order is confirmed' },
-              { icon: Package, titleBn: 'Order Status Tracker', titleEn: 'Order Status Tracker', descBn: 'Pending → Shipped → Delivered — সব একটি জায়গায়', descEn: 'Pending → Shipped → Delivered — all in one place' },
-              { icon: Wallet, titleBn: 'Payment Breakdown', titleEn: 'Payment Breakdown', descBn: 'bKash / Nagad / COD — cash flow পরিষ্কার দেখুন', descEn: 'bKash / Nagad / COD — see cash flow clearly' },
-              { icon: Bell, titleBn: 'Telegram Daily Report', titleEn: 'Telegram Daily Report', descBn: 'প্রতিদিন সকালে Telegram-এ — মোট অর্ডার, রেভেনিউ, সেরা Ads', descEn: 'Every morning on Telegram — total orders, revenue, best Ads' },
-              { icon: Languages, titleBn: 'সম্পূর্ণ বাংলা Interface', titleEn: 'Full Bangla Interface', descBn: 'English-এ স্বাচ্ছন্দ্য না হলেও সমস্যা নেই — পুরো Dashboard বাংলায়', descEn: 'No problem if not comfortable with English — full Dashboard in Bangla' }
+              { icon: Activity, titleBn: 'Meta Algorithm Signal', titleEn: 'Meta Algorithm Signal', descBn: 'প্রতিটি Inbox অর্ডার Meta-কে জানায় সঠিক কাস্টমার খুঁজে পায়', descEn: 'Notifies Meta of every Inbox order finds the right customer' },
+              { icon: LayoutDashboard, titleBn: 'Conversation Dashboard', titleEn: 'Conversation Dashboard', descBn: 'Ads থেকে আসা সব message একটি জায়গায় status সহ', descEn: 'All messages from Ads in one place with status' },
+              { icon: BarChart2, titleBn: 'Ad Performance Report', titleEn: 'Ad Performance Report', descBn: 'কোন Ads থেকে কত সেল, কত টাকা রেভেনিউ সরাসরি দেখুন', descEn: 'See directly how many sales and how much revenue from each Ad' },
+              { icon: Bot, titleBn: 'Auto Confirmation Message', titleEn: 'Auto Confirmation Message', descBn: 'অর্ডার confirm করলে customer-কে automatic Messenger ম্যাসেজ', descEn: 'Automatic Messenger message to customer when order is confirmed' },
+              { icon: Package, titleBn: 'Order Status Tracker', titleEn: 'Order Status Tracker', descBn: 'Pending → Shipped → Delivered সব একটি জায়গায়', descEn: 'Pending → Shipped → Delivered all in one place' },
+              { icon: Users, titleBn: 'Smart CRM', titleEn: 'Smart CRM', descBn: 'কাস্টমারদের ডেটাবেস এবং রিপিট পারচেজ ট্র্যাকিং', descEn: 'Customer database and repeat purchase tracking' },
+              { icon: Wallet, titleBn: 'Payment Breakdown', titleEn: 'Payment Breakdown', descBn: 'bKash / Nagad / COD cash flow পরিষ্কার দেখুন', descEn: 'bKash / Nagad / COD see cash flow clearly' },
+              { icon: Bell, titleBn: 'Telegram Daily Report', titleEn: 'Telegram Daily Report', descBn: 'প্রতিদিন সকালে Telegram-এ মোট অর্ডার, রেভেনিউ, সেরা Ads', descEn: 'Every morning on Telegram total orders, revenue, best Ads' },
+              { icon: Languages, titleBn: 'সম্পূর্ণ বাংলা Interface', titleEn: 'Full Bangla Interface', descBn: 'English-এ স্বাচ্ছন্দ্য না হলেও সমস্যা নেই পুরো Dashboard বাংলায়', descEn: 'No problem if not comfortable with English full Dashboard in Bangla' }
             ].map((feat, idx) => (
               <motion.div 
                 key={idx}
@@ -2064,7 +2155,7 @@ export default function App() {
             {[
               { bn: <>যারা <strong>Facebook বা Instagram Ads</strong> চালান</>, en: <>Those who run <strong>Facebook or Instagram Ads</strong></> },
               { bn: <>যারা <strong>Inbox বা Messenger-এ</strong> order নেন</>, en: <>Those who take orders in <strong>Inbox or Messenger</strong></> },
-              { bn: <>যাদের <strong>কোনো website নেই</strong> — শুধু Facebook Page আছে</>, en: <>Those who have <strong>no website</strong> — only a Facebook Page</> },
+              { bn: <>যাদের <strong>কোনো website নেই</strong> শুধু Facebook Page আছে</>, en: <>Those who have <strong>no website</strong> only a Facebook Page</> },
               { bn: <>যারা Ads-এর <strong>খরচ কমিয়ে বেশি sale</strong> করতে চান</>, en: <>Those who want to <strong>reduce ad costs and increase sales</strong></> }
             ].map((item, idx) => (
               <motion.div 
@@ -2095,16 +2186,20 @@ export default function App() {
           <div style={{textAlign: 'center'}}>
             <span className="section-label">{i18n.language === 'bn' ? 'মূল্য' : 'Pricing'}</span>
             <h2 className="section-title">{i18n.language === 'bn' ? 'একটি বাড়তি সেলেই উঠে আসে' : 'Pays for itself with one extra sale'}</h2>
-            <p className="section-sub" style={{margin: '0 auto'}}>{i18n.language === 'bn' ? '৪৯৯ টাকা মাসিক — মানে মাসে মাত্র একটি extra সেলেই পুরো খরচ উঠে যায়।' : '499 BDT monthly — meaning just one extra sale a month covers the entire cost.'}</p>
           </div>
 
-          <div className="pricing-grid">
-            <div className="pricing-card featured">
-              <div className="pricing-badge">Starter</div>
+          <div className="pricing-grid mx-auto">
+            <div className="pricing-card featured rounded-[40px]">
+              <div className="pricing-badge">Starter Plan</div>
               <div className="plan-label">Monthly Plan</div>
               <div className="plan-price">৳{formatNum('499')}<sub>/মাস</sub></div>
               <div className="plan-note">{i18n.language === 'bn' ? '৩০ দিন ফ্রি ট্রায়াল' : '30 Days Free Trial'}</div>
-              <ul className="plan-list">
+              
+              <p className="text-sm text-text2 mb-8 font-bold border-y border-border py-4 my-6">
+                {i18n.language === 'bn' ? '৪৯৯ টাকা মাসিক মানে মাসে মাত্র একটি extra সেলেই পুরো খরচ উঠে যায়।' : '499 BDT monthly meaning just one extra sale a month covers the entire cost.'}
+              </p>
+
+              <ul className="plan-list mb-10">
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? 'Meta Algorithm Signal (Server-side)' : 'Meta Algorithm Signal (Server-side)'}</li>
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? 'Ad Attribution Dashboard' : 'Ad Attribution Dashboard'}</li>
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? 'Conversation Card Dashboard' : 'Conversation Card Dashboard'}</li>
@@ -2114,8 +2209,9 @@ export default function App() {
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? 'সম্পূর্ণ বাংলা Interface' : 'Full Bangla Interface'}</li>
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? '১টি Facebook Page · মাসে ১০০ অর্ডার' : '1 Facebook Page · 100 Orders/Month'}</li>
               </ul>
-              <button onClick={() => handleAuthClick('signup')} className="btn-primary w-full">
-                {i18n.language === 'bn' ? 'শুরু করুন →' : 'Get 30 days Free →'}
+
+              <button onClick={() => handleAuthClick('signup')} className="btn-primary w-full btn-glow py-5 text-lg rounded-full">
+                {i18n.language === 'bn' ? 'শুরু করুন' : 'Get 30 days Free'}
               </button>
             </div>
 
@@ -2151,11 +2247,11 @@ export default function App() {
             {[
               {
                 q: i18n.language === 'bn' ? 'Website বা Pixel ছাড়া কি সত্যিই Tracking হয়?' : 'Is tracking really possible without a website or pixel?',
-                a: i18n.language === 'bn' ? 'হ্যাঁ। Trackoora Pixel ব্যবহার করে না — কারণ আপনার business website-এ না, Messenger-এ। আমরা Meta-র নিজস্ব Messenger system ব্যবহার করি।' : "Yes. Trackoora doesn't use Pixel because your business is on Messenger, not a website. We use Meta's own Messenger system."
+                a: i18n.language === 'bn' ? 'হ্যাঁ। Trackoora Pixel ব্যবহার করে না কারণ আপনার business website-এ না, Messenger-এ। আমরা Meta-র নিজস্ব Messenger system ব্যবহার করি।' : "Yes. Trackoora doesn't use Pixel because your business is on Messenger, not a website. We use Meta's own Messenger system."
               },
               {
-                q: i18n.language === 'bn' ? 'আমি শুধু Facebook-এ সেল করি — এটা কি আমার জন্য?' : 'I only sell on Facebook — is this for me?',
-                a: i18n.language === 'bn' ? 'হ্যাঁ — ঠিক আপনার জন্যই তৈরি। শুধু Facebook Page আর Meta Ads হলেই যথেষ্ট। ওয়েবসাইট নেই, ঝামেলা নেই।' : "Yes — it's built exactly for you. Just a Facebook Page and Meta Ads are enough. No website, no hassle."
+                q: i18n.language === 'bn' ? 'আমি শুধু Facebook-এ সেল করি এটা কি আমার জন্য?' : 'I only sell on Facebook is this for me?',
+                a: i18n.language === 'bn' ? 'হ্যাঁ ঠিক আপনার জন্যই তৈরি। শুধু Facebook Page আর Meta Ads হলেই যথেষ্ট। ওয়েবসাইট নেই, ঝামেলা নেই।' : "Yes it's built exactly for you. Just a Facebook Page and Meta Ads are enough. No website, no hassle."
               },
               {
                 q: i18n.language === 'bn' ? 'Ads পারফরম্যান্স কতদিনে উন্নত হবে?' : 'How long until ad performance improves?',
@@ -2192,9 +2288,9 @@ export default function App() {
           <h2>{i18n.language === 'bn' ? 'আপনার Ads-কে অন্ধের মতো চালানো বন্ধ করুন' : 'Stop running your Ads blindly'}</h2>
           <p>{i18n.language === 'bn' ? 'Trackoora-এর মাধ্যমে Meta-কে জানান আপনার আসল কাস্টমার কারা। আজই শুরু করুন আপনার ৩০ দিনের ফ্রি ট্রায়াল।' : 'Tell Meta who your real customers are with Trackoora. Start your 30-day free trial today.'}</p>
           
-          <button onClick={() => handleAuthClick('signup')} className="btn-primary large">
+          <button onClick={() => handleAuthClick('signup')} className="btn-primary large btn-glow">
             {i18n.language === 'bn' ? 'ফ্রি ট্রায়াল শুরু করুন' : 'Start Free Trial'}
-            <ArrowRight className="w-5 h-5" />
+            
           </button>
         </div>
       </motion.section>
@@ -2224,7 +2320,6 @@ export default function App() {
           </div>
           <div className="footer-bottom">
             <p>© ২০২৬ Trackoora · সর্বস্বত্ব সংরক্ষিত</p>
-            <p>Developed with ❤️ Trackoora Team 🇧🇩</p>
           </div>
         </div>
       </footer>
@@ -2307,7 +2402,7 @@ export default function App() {
                             className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2"
                           >
                             {i18n.language === 'bn' ? 'কোড পাঠান' : 'Send Code'}
-                            <ArrowRight className="w-5 h-5" />
+                            
                           </button>
                         </div>
                       </div>
@@ -2378,11 +2473,11 @@ export default function App() {
                       <div className="pl-4 space-y-2">
                         <p className="font-bold text-sm">{i18n.language === 'bn' ? 'সেলার-সম্পর্কিত তথ্য:' : 'Seller-related information:'}</p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
-                          <li>{i18n.language === 'bn' ? 'নাম, ফোন নম্বর, ইমেইল — account registration-এর সময়' : 'Name, phone number, email — during account registration'}</li>
-                          <li>{i18n.language === 'bn' ? 'Facebook Page তথ্য ও OAuth access token — Facebook Login-এর মাধ্যমে। আপনার Facebook পাসওয়ার্ড আমরা কখনো দেখি না, সংরক্ষণ করি না' : 'Facebook Page info & OAuth access token — via Facebook Login. We never see or store your Facebook password'}</li>
-                          <li>{i18n.language === 'bn' ? 'Meta Ads account ID — ad performance data pull করতে' : 'Meta Ads account ID — to pull ad performance data'}</li>
-                          <li>{i18n.language === 'bn' ? 'Telegram chat ID — daily report পাঠাতে (যদি সংযুক্ত করেন)' : 'Telegram chat ID — to send daily reports (if connected)'}</li>
-                          <li>{i18n.language === 'bn' ? 'Subscription ও billing তথ্য — payment gateway-এর মাধ্যমে' : 'Subscription & billing info — via payment gateway'}</li>
+                          <li>{i18n.language === 'bn' ? 'নাম, ফোন নম্বর, ইমেইল account registration-এর সময়' : 'Name, phone number, email during account registration'}</li>
+                          <li>{i18n.language === 'bn' ? 'Facebook Page তথ্য ও OAuth access token Facebook Login-এর মাধ্যমে। আপনার Facebook পাসওয়ার্ড আমরা কখনো দেখি না, সংরক্ষণ করি না' : 'Facebook Page info & OAuth access token via Facebook Login. We never see or store your Facebook password'}</li>
+                          <li>{i18n.language === 'bn' ? 'Meta Ads account ID ad performance data pull করতে' : 'Meta Ads account ID to pull ad performance data'}</li>
+                          <li>{i18n.language === 'bn' ? 'Telegram chat ID daily report পাঠাতে (যদি সংযুক্ত করেন)' : 'Telegram chat ID to send daily reports (if connected)'}</li>
+                          <li>{i18n.language === 'bn' ? 'Subscription ও billing তথ্য payment gateway-এর মাধ্যমে' : 'Subscription & billing info via payment gateway'}</li>
                         </ul>
                         <p className="font-bold text-sm mt-4">{i18n.language === 'bn' ? 'Customer-সম্পর্কিত তথ্য (সেলারের হয়ে সংগৃহীত):' : 'Customer-related information (collected on behalf of the seller):'}</p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
@@ -2400,11 +2495,11 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '২. কেন এই তথ্য সংগ্রহ করা হয়' : '2. Why this information is collected'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Trackoora-এর service প্রদান — এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora service — this is the sole purpose'}</li>
-                        <li>{i18n.language === 'bn' ? 'Meta Algorithm-এ sale signal ও — সেলারের Ads performance উন্নত করতে' : 'Sale signals to Meta Algorithm — to improve seller Ads performance'}</li>
+                        <li>{i18n.language === 'bn' ? 'Trackoora-এর service প্রদান এটাই একমাত্র উদ্দেশ্য' : 'Providing Trackoora service this is the sole purpose'}</li>
+                        <li>{i18n.language === 'bn' ? 'Meta Algorithm-এ sale signal ও সেলারের Ads performance উন্নত করতে' : 'Sale signals to Meta Algorithm to improve seller Ads performance'}</li>
                         <li>{i18n.language === 'bn' ? 'Ad performance dashboard তৈরি করতে Meta Ads from data pull করা' : 'Pulling data from Meta Ads to create Ad performance dashboard'}</li>
                         <li>{i18n.language === 'bn' ? 'Telegram daily report পাঠানো' : 'Sending Telegram daily reports'}</li>
-                        <li>{i18n.language === 'bn' ? 'Anonymized, aggregated data — product improvement-এর জন্য (individual চেনা যায় না এমন)' : 'Anonymized, aggregated data — for product improvement (non-identifiable)'}</li>
+                        <li>{i18n.language === 'bn' ? 'Anonymized, aggregated data product improvement-এর জন্য (individual চেনা যায় না এমন)' : 'Anonymized, aggregated data for product improvement (non-identifiable)'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৩. তৃতীয় পক্ষের সাথে তথ্য শেয়ার' : '3. Sharing information with third parties'}</h3>
@@ -2416,38 +2511,38 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '৪. তথ্য কীভাবে সুরক্ষিত রাখা হয়' : '4. How information is kept secure'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Facebook OAuth token ও সব sensitive credentials — high security encryption দিয়ে database-এ সংরক্ষিত' : 'Facebook OAuth token & all sensitive credentials — stored in database with high security encryption'}</li>
-                        <li>{i18n.language === 'bn' ? 'Customer Facebook User ID — Meta-তে পাঠানোর আগে hash করা হয়' : 'Customer Facebook User ID — hashed before sending to Meta'}</li>
-                        <li>{i18n.language === 'bn' ? 'সমস্ত connection — HTTPS/TLS দিয়ে encrypted, কোনো plain HTTP নেই' : 'All connections — encrypted with HTTPS/TLS, no plain HTTP'}</li>
-                        <li>{i18n.language === 'bn' ? 'প্রতিটি seller-এর data সম্পূর্ণ isolated — অন্য কোনো seller কখনো আপনার data দেখতে পারবে না' : "Each seller's data is completely isolated — no other seller can ever see your data"}</li>
-                        <li>{i18n.language === 'bn' ? 'High Security Protection — platform সর্বক্ষণ monitoring-এ আছে' : 'High Security Protection — platform is under constant monitoring'}</li>
-                        <li>{i18n.language === 'bn' ? 'সব admin access log করা হয় — কোনো silent action নেই' : 'All admin access is logged — no silent actions'}</li>
+                        <li>{i18n.language === 'bn' ? 'Facebook OAuth token ও সব sensitive credentials high security encryption দিয়ে database-এ সংরক্ষিত' : 'Facebook OAuth token & all sensitive credentials stored in database with high security encryption'}</li>
+                        <li>{i18n.language === 'bn' ? 'Customer Facebook User ID Meta-তে পাঠানোর আগে hash করা হয়' : 'Customer Facebook User ID hashed before sending to Meta'}</li>
+                        <li>{i18n.language === 'bn' ? 'সমস্ত connection HTTPS/TLS দিয়ে encrypted, কোনো plain HTTP নেই' : 'All connections encrypted with HTTPS/TLS, no plain HTTP'}</li>
+                        <li>{i18n.language === 'bn' ? 'প্রতিটি seller-এর data সম্পূর্ণ isolated অন্য কোনো seller কখনো আপনার data দেখতে পারবে না' : "Each seller's data is completely isolated no other seller can ever see your data"}</li>
+                        <li>{i18n.language === 'bn' ? 'High Security Protection platform সর্বক্ষণ monitoring-এ আছে' : 'High Security Protection platform is under constant monitoring'}</li>
+                        <li>{i18n.language === 'bn' ? 'সব admin access log করা হয় কোনো silent action নেই' : 'All admin access is logged no silent actions'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৫. তথ্য কতদিন সংরক্ষণ করা হয়' : '5. How long information is stored'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
                         <li>{i18n.language === 'bn' ? 'সক্রিয় account: Subscription চলাকালীন সম্পূর্ণ সময়' : 'Active account: Entire duration of subscription'}</li>
-                        <li>{i18n.language === 'bn' ? 'Cancelled account: বাতিলের ৩০ দিন পর সম্পূর্ণ মুছে ফেলা হয় — seller-কে আগে notify করা হয়' : 'Cancelled account: Completely deleted 30 days after cancellation — seller is notified beforehand'}</li>
+                        <li>{i18n.language === 'bn' ? 'Cancelled account: বাতিলের ৩০ দিন পর সম্পূর্ণ মুছে ফেলা হয় seller-কে আগে notify করা হয়' : 'Cancelled account: Completely deleted 30 days after cancellation seller is notified beforehand'}</li>
                         <li>{i18n.language === 'bn' ? 'Customer data: সেলারের account active থাকা পর্যন্ত সংরক্ষিত। Account delete হলে customer data-ও মুছে যায়' : "Customer data: Stored as long as seller's account is active. If account is deleted, customer data is also removed"}</li>
                         <li>{i18n.language === 'bn' ? 'Meta signal logs: ৯০ দিন পর automatically মুছে ফেলা হয়' : 'Meta signal logs: Automatically deleted after 90 days'}</li>
-                        <li>{i18n.language === 'bn' ? 'Application error logs: ৩০ দিন — কোনো personal data এতে থাকে না' : 'Application error logs: 30 days — contains no personal data'}</li>
+                        <li>{i18n.language === 'bn' ? 'Application error logs: ৩০ দিন কোনো personal data এতে থাকে না' : 'Application error logs: 30 days contains no personal data'}</li>
                         <li>{i18n.language === 'bn' ? 'Billing records: আইনি কারণে ৭ বছর সংরক্ষিত থাকে' : 'Billing records: Stored for 7 years for legal reasons'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৬. Cookies ও Anonymous Data' : '6. Cookies & Anonymous Data'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় — আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data — product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
-                          : 'Only essential cookies are used on the Trackoora landing page — to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
+                          ? 'Trackoora landing page-এ শুধুমাত্র essential cookies ব্যবহার করা হয় আপনার session ও অন্যান্য data সাময়িকভাবে রাখতে। Tracking বা third-party advertising cookie ব্যবহার করা হয় না। Anonymized aggregate data product improvement-এর জন্য ব্যবহার করা হতে পারে।' 
+                          : 'Only essential cookies are used on the Trackoora landing page to temporarily store your session and other data. No tracking or third-party advertising cookies are used. Anonymized aggregate data may be used for product improvement.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৭. আপনার অধিকার' : '7. Your Rights'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
                         <li>{i18n.language === 'bn' ? 'আপনার সমস্ত data দেখার অনুরোধ করতে পারবেন' : 'You can request to see all your data'}</li>
                         <li>{i18n.language === 'bn' ? 'যেকোনো সময় account delete করে সমস্ত data মুছে ফেলার অনুরোধ করতে পারবেন' : 'You can request to delete your account and all data at any time'}</li>
-                        <li>{i18n.language === 'bn' ? 'Facebook Page disconnect করতে পারবেন — তখন আমাদের Page access তাৎক্ষণিক বাতিল হয়' : 'You can disconnect your Facebook Page — our Page access is then immediately revoked'}</li>
+                        <li>{i18n.language === 'bn' ? 'Facebook Page disconnect করতে পারবেন তখন আমাদের Page access তাৎক্ষণিক বাতিল হয়' : 'You can disconnect your Facebook Page our Page access is then immediately revoked'}</li>
                         <li>{i18n.language === 'bn' ? 'Account delete করলে ৩০ দিনের মধ্যে সমস্ত data permanently মুছে যাবে' : 'If account is deleted, all data will be permanently removed within 30 days'}</li>
-                        <li>{i18n.language === 'bn' ? 'Data সংক্রান্ত যেকোনো অভিযোগ আমাদের কাছে করতে পারবেন — ৪৮ ঘণ্টার মধ্যে সাড়া দেওয়া হবে' : 'Any data-related complaints can be made to us — we will respond within 48 hours'}</li>
+                        <li>{i18n.language === 'bn' ? 'Data সংক্রান্ত যেকোনো অভিযোগ আমাদের কাছে করতে পারবেন ৪৮ ঘণ্টার মধ্যে সাড়া দেওয়া হবে' : 'Any data-related complaints can be made to us we will respond within 48 hours'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৮. বাংলাদেশ Cyber Security Act 2023' : '8. Bangladesh Cyber Security Act 2023'}</h3>
@@ -2495,9 +2590,9 @@ export default function App() {
                             : 'Trackoora is a SaaS (Software as a Service) platform built for F-Commerce sellers in Bangladesh. It provides:'}
                         </p>
                         <ul className="list-disc pl-5 space-y-1 text-sm text-text2">
-                          <li>{i18n.language === 'bn' ? 'Meta Ads attribution — Inbox-এ confirm করা প্রতিটি অর্ডার Meta Algorithm-কে জানানো' : 'Meta Ads attribution — informing Meta Algorithm of every order confirmed in Inbox'}</li>
-                          <li>{i18n.language === 'bn' ? 'Conversation Card Dashboard — Ads থেকে আসা সব message এক জায়গায় track করা' : 'Conversation Card Dashboard — tracking all messages from Ads in one place'}</li>
-                          <li>{i18n.language === 'bn' ? 'Ad Performance Report — কোন Ads থেকে কত সেল এবং কত revenue' : 'Ad Performance Report — how many sales and how much revenue from which Ads'}</li>
+                          <li>{i18n.language === 'bn' ? 'Meta Ads attribution Inbox-এ confirm করা প্রতিটি অর্ডার Meta Algorithm-কে জানানো' : 'Meta Ads attribution informing Meta Algorithm of every order confirmed in Inbox'}</li>
+                          <li>{i18n.language === 'bn' ? 'Conversation Card Dashboard Ads থেকে আসা সব message এক জায়গায় track করা' : 'Conversation Card Dashboard tracking all messages from Ads in one place'}</li>
+                          <li>{i18n.language === 'bn' ? 'Ad Performance Report কোন Ads থেকে কত সেল এবং কত revenue' : 'Ad Performance Report how many sales and how much revenue from which Ads'}</li>
                           <li>{i18n.language === 'bn' ? 'Order Status Tracker ও Auto Confirmation Message' : 'Order Status Tracker & Auto Confirmation Message'}</li>
                           <li>{i18n.language === 'bn' ? 'Telegram Daily Report' : 'Telegram Daily Report'}</li>
                         </ul>
@@ -2519,23 +2614,23 @@ export default function App() {
 
                       <h3>{i18n.language === 'bn' ? '৩. Beta Period শর্ত' : '3. Beta Period Terms'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Beta period (প্রথম ৩০ দিন) সম্পূর্ণ বিনামূল্যে — কোনো payment card লাগবে না।' : 'Beta period (first 30 days) is completely free — no payment card required.'}</li>
-                        <li>{i18n.language === 'bn' ? 'Beta-তে যোগ দিলে আপনি honest feedback দিতে সম্মত হচ্ছেন — এটাই আমাদের শর্ত।' : 'By joining Beta, you agree to provide honest feedback — this is our condition.'}</li>
-                        <li>{i18n.language === 'bn' ? 'Beta period-এ service বা feature পরিবর্তন হতে পারে — আগে জানানো হবে।' : 'Services or features may change during the Beta period — notification will be provided beforehand.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta period (প্রথম ৩০ দিন) সম্পূর্ণ বিনামূল্যে কোনো payment card লাগবে না।' : 'Beta period (first 30 days) is completely free no payment card required.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta-তে যোগ দিলে আপনি honest feedback দিতে সম্মত হচ্ছেন এটাই আমাদের শর্ত।' : 'By joining Beta, you agree to provide honest feedback this is our condition.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta period-এ service বা feature পরিবর্তন হতে পারে আগে জানানো হবে।' : 'Services or features may change during the Beta period notification will be provided beforehand.'}</li>
                         <li>{i18n.language === 'bn' ? 'Beta data product improvement-এ anonymized আকারে ব্যবহার হতে পারে।' : 'Beta data may be used in anonymized form for product improvement.'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৪. Subscription ও Payment' : '4. Subscription & Payment'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'Beta শেষে Starter Plan: ৳৪৯৯/মাস — bKash বা Nagad দিয়ে payment।' : 'Starter Plan after Beta: ৳499/month — payment via bKash or Nagad.'}</li>
-                        <li>{i18n.language === 'bn' ? 'মাসিক billing cycle — কোনো annual contract বা hidden charge নেই।' : 'Monthly billing cycle — no annual contract or hidden charges.'}</li>
-                        <li>{i18n.language === 'bn' ? 'Payment না করলে grace period ৩ দিন — তারপর account suspend হবে।' : 'If payment is not made, grace period is 3 days — then account will be suspended.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Beta শেষে Starter Plan: ৳৪৯৯/মাস bKash বা Nagad দিয়ে payment।' : 'Starter Plan after Beta: ৳499/month payment via bKash or Nagad.'}</li>
+                        <li>{i18n.language === 'bn' ? 'মাসিক billing cycle কোনো annual contract বা hidden charge নেই।' : 'Monthly billing cycle no annual contract or hidden charges.'}</li>
+                        <li>{i18n.language === 'bn' ? 'Payment না করলে grace period ৩ দিন তারপর account suspend হবে।' : 'If payment is not made, grace period is 3 days then account will be suspended.'}</li>
                         <li>{i18n.language === 'bn' ? 'Pricing পরিবর্তন হলে ১৪ দিন আগে notify করা হবে।' : 'Pricing changes will be notified 14 days in advance.'}</li>
                       </ul>
 
                       <h3>{i18n.language === 'bn' ? '৫. Cancellation ও Refund' : '5. Cancellation & Refund'}</h3>
                       <ul className="list-disc pl-9 space-y-1 text-sm text-text2">
-                        <li>{i18n.language === 'bn' ? 'যেকোনো সময় cancel করা যাবে — পরবর্তী billing cycle-এ charge হবে না।' : 'Can be cancelled at any time — no charge for the next billing cycle.'}</li>
+                        <li>{i18n.language === 'bn' ? 'যেকোনো সময় cancel করা যাবে পরবর্তী billing cycle-এ charge হবে না।' : 'Can be cancelled at any time no charge for the next billing cycle.'}</li>
                         <li>{i18n.language === 'bn' ? 'Cancel করলে current billing period শেষ পর্যন্ত access থাকবে।' : 'If cancelled, access remains until the end of the current billing period.'}</li>
                         <li>{i18n.language === 'bn' ? 'Cancel-এর ৩০ দিন পর সমস্ত data permanently মুছে ফেলা হবে।' : 'All data will be permanently deleted 30 days after cancellation.'}</li>
                         <li>{i18n.language === 'bn' ? 'Technical সমস্যার কারণে ২৪ ঘণ্টার বেশি service unavailable হলে আনুপাতিক credit দেওয়া হবে।' : 'Proportional credit will be given if service is unavailable for more than 24 hours due to technical issues.'}</li>
@@ -2545,15 +2640,15 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৬. Service Availability' : '6. Service Availability'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে — planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
-                          : 'Trackoora aims for 99%+ uptime. However, temporary interruptions may occur due to — planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
+                          ? 'Trackoora ৯৯%+ uptime-এর লক্ষ্য রাখে। তবে নিম্নলিখিত কারণে temporary interruption হতে পারে planned maintenance (আগে জানানো হবে), Meta API outage, বা force majeure। Interruption-এর সময় sellers-কে যত দ্রুত সম্ভব notify করা হবে।' 
+                          : 'Trackoora aims for 99%+ uptime. However, temporary interruptions may occur due to planned maintenance (notified beforehand), Meta API outage, or force majeure. Sellers will be notified as soon as possible during interruptions.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৭. Intellectual Property' : '7. Intellectual Property'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora platform, এর design, code, content, এবং brand — এগুলো Trackoora-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
-                          : 'Trackoora platform, its design, code, content, and brand — these are the intellectual property of Trackoora. You get the right to use the service, not ownership. You own your business data.'}
+                          ? 'Trackoora platform, এর design, code, content, এবং brand এগুলো Trackoora-এর intellectual property। আপনি service ব্যবহার করার অধিকার পাচ্ছেন, মালিকানা নয়। আপনার নিজের business data-র মালিক আপনি।' 
+                          : 'Trackoora platform, its design, code, content, and brand these are the intellectual property of Trackoora. You get the right to use the service, not ownership. You own your business data.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '৮. Account Responsibility' : '8. Account Responsibility'}</h3>
@@ -2566,15 +2661,15 @@ export default function App() {
                       <h3>{i18n.language === 'bn' ? '৯. Limitation of Liability' : '9. Limitation of Liability'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'Trackoora Meta Ads-এর performance guarantee করে না — আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
-                          : 'Trackoora does not guarantee Meta Ads performance — we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
+                          ? 'Trackoora Meta Ads-এর performance guarantee করে না আমরা সঠিক purchase data Meta-কে পাঠাই, algorithm optimization Meta-র নিজস্ব system করে। Meta Algorithm failure-এর জন্য Trackoora দায়ী নয়। আমাদের সর্বোচ্চ liability আপনার সর্বশেষ এক মাসের subscription fee-র বেশি নয়।' 
+                          : 'Trackoora does not guarantee Meta Ads performance we send correct purchase data to Meta, Meta\'s own system does algorithm optimization. Trackoora is not responsible for Meta Algorithm failure. Our maximum liability is not more than your last one month\'s subscription fee.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '১০. Account Termination' : '10. Account Termination'}</h3>
                       <p className="pl-4 text-sm text-text2">
                         {i18n.language === 'bn' 
-                          ? 'নিম্নলিখিত কারণে Trackoora account বন্ধ করতে পারে — Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
-                          : 'Trackoora may close an account for the following reasons — Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
+                          ? 'নিম্নলিখিত কারণে Trackoora account বন্ধ করতে পারে Terms violation, fraudulent activity, বা ৩০ দিনের বেশি payment failure। সাধারণত আগে warn করা হবে। গুরুতর violation-এর ক্ষেত্রে তাৎক্ষণিক বন্ধ করা হতে পারে।' 
+                          : 'Trackoora may close an account for the following reasons Terms violation, fraudulent activity, or payment failure for more than 30 days. Usually, a warning will be given beforehand. Immediate closure may occur for serious violations.'}
                       </p>
 
                       <h3>{i18n.language === 'bn' ? '১১. Terms পরিবর্তন' : '11. Terms Changes'}</h3>

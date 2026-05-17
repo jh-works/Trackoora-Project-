@@ -110,7 +110,7 @@
   .section-label {
     display: inline-block;
     font-size: 13px; font-weight: 700; letter-spacing: 1.5px;
-    text-transform: uppercase; color: var(--orange);
+    color: var(--orange);
     margin-bottom: 18px;
     padding: 8px 18px;
     background: var(--orange-dim);
@@ -128,13 +128,21 @@
     max-width: 600px; line-height: 1.85;
   }
 
+@keyframes beep-slow {
+  0%, 100% { transform: scale(1); box-shadow: 0 0 0 rgba(249, 115, 22, 0); }
+  50% { transform: scale(1.02); box-shadow: 0 0 20px rgba(249, 115, 22, 0.2); }
+}
+.beep-slow {
+  animation: beep-slow 2s infinite ease-in-out;
+}
+
   /* ── BUTTONS ────────────────────────────────── */
   .btn-primary {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     background: var(--orange); color: #fff;
     font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
     font-size: 14px; font-weight: 600;
-    padding: 10px 24px; border-radius: 12px;
+    padding: 10px 24px; border-radius: 9999px;
     border: none; cursor: pointer; text-decoration: none;
     transition: all .2s ease;
     box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2), 0 4px 6px -2px rgba(249, 115, 22, 0.1);
@@ -154,7 +162,7 @@
     background: transparent; color: var(--text2);
     font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
     font-size: 14px; font-weight: 600;
-    padding: 10px 24px; border-radius: 12px;
+    padding: 10px 24px; border-radius: 9999px;
     border: 1px solid var(--border2); text-decoration: none;
     transition: all .2s ease;
   }
@@ -488,7 +496,7 @@
   }
   .proof-col-label {
     font-size: 12px; font-weight: 700; letter-spacing: 1.5px;
-    text-transform: uppercase; margin-bottom: 20px;
+    margin-bottom: 20px;
   }
   .proof-col-label.bad  { color: var(--red); }
   .proof-col-label.good { color: var(--green); }
@@ -580,7 +588,7 @@
     font-size: 11px; font-weight: 700; padding: 4px 12px;
     border-radius: 100px; letter-spacing: 0.5px;
   }
-  .plan-label { font-size: 12px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+  .plan-label { font-size: 12px; font-weight: 700; letter-spacing: 2px; color: var(--text3); margin-bottom: 10px; }
   .plan-price {
     font-family: 'Syne', sans-serif;
     font-size: 52px; font-weight: 800; line-height: 1; margin-bottom: 6px;
@@ -855,7 +863,7 @@
     border: 1px solid var(--border2);
     color: var(--text);
     padding: 10px 24px;
-    border-radius: 12px;
+    border-radius: 9999px;
     font-size: 12px;
     font-weight: 700;
     text-decoration: none;
@@ -912,6 +920,14 @@
     50% { border-color: rgba(52,211,153,0.6); box-shadow: 0 0 20px rgba(52,211,153,0.2); }
   }
 
+  @keyframes btn-glow {
+    0%, 100% { box-shadow: 0 0 0 rgba(249, 115, 22, 0); }
+    50% { box-shadow: 0 0 25px rgba(249, 115, 22, 0.4); }
+  }
+  .btn-glow {
+    animation: btn-glow 3s infinite ease-in-out;
+  }
+
   .info-box {
     background: rgba(34, 211, 238, 0.05);
     border: 1px solid rgba(34, 211, 238, 0.2);
@@ -929,15 +945,15 @@
 
 /* Auth Specific Styles */
 .auth-container {
-  @apply min-h-screen flex items-center justify-center p-6 relative overflow-hidden;
+  @apply min-h-screen flex flex-col items-center justify-center p-6 bg-bg relative overflow-hidden;
 }
 
 .auth-card {
-  @apply w-full max-w-md bg-card border border-border2 rounded-[24px] p-8 md:p-12 relative z-10 shadow-2xl;
+  @apply w-full max-w-lg bg-transparent p-4 md:p-8 relative z-10;
 }
 
 .auth-input {
-  @apply w-full bg-bg3 border border-border rounded-xl py-4 px-4 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all;
+  @apply w-full bg-card border border-border2 rounded-full py-4 px-6 text-text focus:border-orange focus:ring-1 focus:ring-orange outline-none transition-all shadow-sm;
 }
 
 .auth-input-phone {

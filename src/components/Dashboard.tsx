@@ -1707,7 +1707,7 @@ export default function Dashboard({
                   }}
                   className="btn-primary w-full"
                 >
-                  <ArrowRight className="w-4 h-4" /> Go to Dashboard
+                   Go to Dashboard
                 </button>
              </motion.div>
           </div>
@@ -2805,37 +2805,37 @@ export default function Dashboard({
         </AnimatePresence>
 
         {/* Dashboard Content */}
-        <div className={`flex-1 p-4 md:p-8 space-y-6 md:space-y-8 relative ${integrationSkipped && activeTab !== 'settings' && activeTab !== 'subscription' ? 'overflow-hidden' : 'overflow-y-auto'}`}>
-          {integrationSkipped && activeTab !== 'settings' && activeTab !== 'subscription' && (
-             <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-bg/80 backdrop-blur-md p-4">
-               <div className="max-w-sm w-full bg-card border border-border rounded-3xl p-6 md:p-8 text-center relative overflow-hidden shadow-xl shadow-[#1877F2]/5 mt-[-10vh]">
-                 <div className="absolute top-0 left-0 w-full h-1 bg-[#1877F2]"></div>
-                 <div className="w-16 h-16 bg-[#1877F2]/10 rounded-2xl flex items-center justify-center mx-auto mb-5 relative group transition-all">
-                   <div className="absolute inset-0 bg-[#1877F2]/20 rounded-2xl blur-lg group-hover:bg-[#1877F2]/30 transition-all"></div>
-                   <Facebook className="w-8 h-8 text-[#1877F2] relative z-10" />
+        <div className={`flex-1 p-4 md:p-8 space-y-6 md:space-y-8 relative overflow-y-auto`}>
+          {integrationSkipped && ['messages', 'orders', 'ads'].includes(activeTab) ? (
+             <div className="flex flex-col items-center justify-center p-8 min-h-[60vh]">
+               <motion.div 
+                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                 animate={{ opacity: 1, scale: 1, y: 0 }}
+                 className="w-full max-w-sm bg-card border border-border2 rounded-3xl p-8 text-center relative shadow-xl overflow-hidden"
+               >
+                 <div className="absolute top-0 left-0 w-full h-1.5 bg-orange"></div>
+                 <div className="space-y-3 mb-8">
+                   <h2 className="text-xl font-black tracking-tight">
+                     {language === 'bn' ? 'ফেসবুক কানেক্ট করুন' : 'Connect Facebook'}
+                   </h2>
+                   <p className="text-text3 text-sm leading-relaxed px-2 font-medium">
+                     {language === 'bn' 
+                       ? `আপনার ${activeTab === 'messages' ? 'ম্যাসেজ' : activeTab === 'orders' ? 'অর্ডার' : 'অ্যাড'} ট্র্যাকিং শুরু করতে ফেসবুক পেজটি কানেক্ট করা প্রয়োজন।` 
+                       : `Connect your Facebook page to access ${activeTab} tracking features.`}
+                   </p>
                  </div>
-                 <h2 className="text-xl font-black mb-2 font-syne tracking-tight">
-                   {language === 'bn' ? 'ফেসবুক কানেক্ট করুন' : 'Connect Facebook'}
-                 </h2>
-                 <p className="text-text2 mb-6 text-sm leading-relaxed">
-                   {language === 'bn' 
-                     ? `সম্পূর্ণ ফিচার আনলক করতে আপনার ফেসবুক পেজ এবং অ্যাড অ্যাকাউন্টটি কানেক্ট করুন।` 
-                     : `Connect Facebook to unlock full features.`}
-                 </p>
                  <button 
                    onClick={() => { onStartConnectFb && onStartConnectFb(); }} 
-                   className="bg-[#1877F2] text-white w-full py-3 rounded-xl font-bold text-base flex items-center justify-center gap-2 hover:bg-[#166fe5] shadow-lg shadow-[#1877F2]/20 hover:-translate-y-0.5 active:translate-y-0 transition-all"
+                   className="btn-primary w-full py-3.5 rounded-full font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange/20"
                  >
-                   <Facebook className="w-5 h-5 shrink-0" fill="currentColor" />
-                   {language === 'bn' ? 'কানেক্ট করুন' : 'Connect Now'}
+                   {language === 'bn' ? 'কানেক্ট করুন' : 'Connect'}
                  </button>
-               </div>
+               </motion.div>
              </div>
-          )}
-
-          <>
-          {activeTab === "overview" && (
-            <div className="space-y-8">
+          ) : (
+            <>
+              {activeTab === "overview" && (
+                <div className="space-y-8">
               {/* Welcome Section */}
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -4056,7 +4056,7 @@ export default function Dashboard({
                         "View All Orders in Management",
                         "সব অর্ডার ম্যানেজমেন্টে দেখুন",
                       )}{" "}
-                      <ArrowRight className="w-4 h-4" />
+                      
                     </button>
                   </div>
                 )}
@@ -7677,7 +7677,7 @@ export default function Dashboard({
                           ) : (
                             <>
                               {t("Confirm Order", "অর্ডার কনফার্ম করুন")}
-                              <ArrowRight className="w-6 h-6 ml-1 transition-transform group-hover:translate-x-1" />
+                              
                             </>
                           )}
                         </button>
@@ -8042,7 +8042,7 @@ export default function Dashboard({
                       onClick={() => setShowAdBreakdown(null)}
                       className="px-8 py-4 bg-orange text-white rounded-2xl font-black text-sm hover:bg-orange/90 transition-all shadow-xl shadow-orange/20 flex items-center justify-center gap-2 mx-auto"
                     >
-                      <ArrowRight className="w-4 h-4 rotate-180" />
+                      
                       {t("Close Breakdown", "ব্রেকডাউন বন্ধ করুন")}
                     </button>
                   </div>
@@ -9284,6 +9284,7 @@ export default function Dashboard({
             )}
           </AnimatePresence>
             </>
+          )}
           
         </div>
       </main>
