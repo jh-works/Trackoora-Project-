@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
 @import "tailwindcss";
 
 /* ── TOKENS ─────────────────────────────────── */
@@ -47,7 +48,7 @@
 }
 
 @theme {
-  --font-sans: 'Hind Siliguri', sans-serif;
+  --font-sans: 'Inter', 'Noto Sans Bengali', sans-serif;
   --font-display: 'Syne', sans-serif;
   
   --color-bg: var(--bg);
@@ -131,14 +132,12 @@
   .btn-primary {
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     background: var(--orange); color: #fff;
-    font-family: 'Hind Siliguri', sans-serif;
-    font-size: 12px; font-weight: 700;
+    font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+    font-size: 14px; font-weight: 600;
     padding: 10px 24px; border-radius: 12px;
     border: none; cursor: pointer; text-decoration: none;
     transition: all .2s ease;
     box-shadow: 0 10px 15px -3px rgba(249, 115, 22, 0.2), 0 4px 6px -2px rgba(249, 115, 22, 0.1);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   .btn-primary:hover {
     transform: scale(1.02);
@@ -148,18 +147,16 @@
   .btn-primary:active {
     transform: scale(0.95);
   }
-  .btn-primary.large { font-size: 14px; padding: 14px 32px; }
+  .btn-primary.large { font-size: 16px; padding: 14px 32px; }
 
   .btn-ghost {
     display: inline-flex; align-items: center; gap: 8px;
     background: transparent; color: var(--text2);
-    font-family: 'Hind Siliguri', sans-serif;
-    font-size: 12px; font-weight: 700;
+    font-family: 'Inter', 'Noto Sans Bengali', sans-serif;
+    font-size: 14px; font-weight: 600;
     padding: 10px 24px; border-radius: 12px;
     border: 1px solid var(--border2); text-decoration: none;
     transition: all .2s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
   }
   .btn-ghost:hover { border-color: var(--orange); color: var(--orange); transform: scale(1.02); }
   .btn-ghost:active { transform: scale(0.95); }
@@ -194,17 +191,10 @@
     display: flex; align-items: center;
     justify-content: space-between; gap: 16px;
   }
-  .logo {
-    font-family: 'Hind Siliguri', sans-serif; font-size: 21px; font-weight: 700;
-    color: var(--text); text-decoration: none; letter-spacing: 0px;
-    white-space: nowrap; flex-shrink: 0;
-    display: inline-flex; align-items: center;
-  }
   .nav-btn {
     font-size: 14px; padding: 11px 24px;
     white-space: nowrap; flex-shrink: 0;
   }
-  .logo span { color: var(--orange); }
 
   /* ── CUSTOM MENU TOGGLE ─────────────────────── */
   #checkbox {

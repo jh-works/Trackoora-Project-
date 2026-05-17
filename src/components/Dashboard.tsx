@@ -2361,7 +2361,7 @@ export default function Dashboard({
         className={`fixed inset-y-0 left-0 z-50 w-52 bg-card border-r border-border flex flex-col transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
         <div className="p-4 flex items-center justify-between shrink-0">
-          <Logo size="sm" showText={true} />
+          <Logo size="sm" showText={true} theme={theme} />
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="md:hidden p-1.5 text-text3 hover:text-text"

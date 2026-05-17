@@ -45,7 +45,9 @@ import {
   RefreshCw,
   Mail,
   Menu,
-  User
+  User,
+  Sun,
+  Moon
 } from 'lucide-react';
 import './i18n';
 import Dashboard from './components/Dashboard';
@@ -215,8 +217,8 @@ export default function App() {
     setIsMenuOpen(false);
   };
 
-  const handleAuthClick = () => {
-    setAuthMode('login');
+  const handleAuthClick = (mode: 'login' | 'signup' = 'login') => {
+    setAuthMode(mode);
     setView('auth');
     setAuthStep('form');
     setError(null);
@@ -451,7 +453,7 @@ export default function App() {
           className="w-full max-w-2xl bg-card border border-border2 rounded-[24px] p-8 md:p-12 relative z-10 shadow-2xl"
         >
           <div className="flex justify-between items-center mb-10">
-            <Logo size="sm" />
+            <Logo size="sm" theme={theme} />
             <div className="flex flex-col items-end gap-2">
               <div className="flex gap-1.5">
                 {['plan', 'survey', 'profile', 'facebook', 'telegram'].map((s, idx) => {
@@ -882,13 +884,23 @@ export default function App() {
           className="w-full max-w-md bg-card border border-border2 rounded-[24px] p-5 md:p-12 relative z-10 shadow-2xl max-h-[95vh] overflow-y-auto"
         >
           <div className="text-center mb-8">
-            <Logo size="lg" className="mx-auto mb-2" />
-            <p className="text-text2 mt-2">
-              {authMode === 'login' 
-                ? (i18n.language === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Login to your account')
-                : (i18n.language === 'bn' ? 'আপনার তথ্য দিয়ে শুরু করুন' : 'Start with your information')
-              }
-            </p>
+            <div className="flex justify-center">
+              <Logo size="lg" theme={theme} className="mx-auto" showText={false} />
+            </div>
+            {authMode === 'login' ? (
+              <>
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight mt-6">
+                  Welcome Back!
+                </h2>
+                <p className="text-text2 mt-2">
+                  {i18n.language === 'bn' ? 'আপনার অ্যাকাউন্টে লগইন করুন' : 'Login to your account'}
+                </p>
+              </>
+            ) : (
+               <p className="text-text2 mt-6">
+                {i18n.language === 'bn' ? 'আপনার তথ্য দিয়ে শুরু করুন' : 'Start with your information'}
+              </p>
+            )}
           </div>
 
           <AnimatePresence mode="wait">
@@ -1042,13 +1054,13 @@ export default function App() {
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      {i18n.language === 'bn' ? 'লগইন করুন' : 'Login Now'}
+                      {i18n.language === 'bn' ? 'চালিয়ে যান' : 'Continue'}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>
 
-                <div className="relative py-1">
+                <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
                   <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-text3">{i18n.language === 'bn' ? 'অথবা' : 'OR'}</span></div>
                 </div>
@@ -1058,9 +1070,9 @@ export default function App() {
                     type="button" 
                     onClick={handleGoogleAuth}
                     disabled={loading}
-                    className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-200 text-[11px] uppercase tracking-wider shadow-sm hover:scale-[1.02] active:scale-95"
+                    className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-200 text-[14px] shadow-sm hover:scale-[1.02] active:scale-95"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -1070,30 +1082,19 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="text-center mt-4">
-                  <p className="text-text2 text-sm">
-                    {i18n.language === 'bn' ? 'অ্যাকাউন্ট নেই?' : "Don't have an account?"}{' '}
-                    <button 
-                      type="button"
-                      onClick={() => resetAuthForm('signup')}
-                      className="text-orange font-bold hover:underline"
-                    >
-                      {i18n.language === 'bn' ? 'সাইনআপ করুন' : 'Signup'}
-                    </button>
-                  </p>
+                <div className="text-center mt-6">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      resetAuthForm();
+                      setView('landing');
+                    }}
+                    className="text-text2 hover:text-text text-sm flex items-center justify-center gap-1 mx-auto transition-colors"
+                  >
+                    <ArrowRight className="w-4 h-4 rotate-180" />
+                    {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
+                  </button>
                 </div>
-
-                <button 
-                  type="button"
-                  onClick={() => {
-                    resetAuthForm();
-                    setView('landing');
-                  }}
-                  className="btn-secondary w-full mt-2"
-                >
-                  <ArrowRight className="w-4 h-4 rotate-180" />
-                  {i18n.language === 'bn' ? 'ফিরে যান' : 'Go Back'}
-                </button>
               </motion.form>
             ) : (
               <motion.form 
@@ -1206,13 +1207,13 @@ export default function App() {
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                   ) : (
                     <>
-                      {i18n.language === 'bn' ? 'সাইনআপ করুন' : 'Signup Now'}
+                      {i18n.language === 'bn' ? 'চালিয়ে যান' : 'Continue'}
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
                 </button>
 
-                <div className="relative py-1">
+                <div className="relative py-4">
                   <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border"></div></div>
                   <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-text3">{i18n.language === 'bn' ? 'অথবা' : 'OR'}</span></div>
                 </div>
@@ -1222,9 +1223,9 @@ export default function App() {
                     type="button" 
                     onClick={handleGoogleAuth}
                     disabled={loading}
-                    className="w-full bg-white text-black font-bold py-3 rounded-xl hover:bg-gray-100 transition-colors flex items-center justify-center gap-2 border border-gray-200 text-sm shadow-sm"
+                    className="w-full bg-white text-black font-bold py-3.5 rounded-xl hover:bg-gray-100 transition-all flex items-center justify-center gap-2 border border-gray-200 text-[14px] shadow-sm hover:scale-[1.02] active:scale-95"
                   >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
                       <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                       <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                       <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -1234,7 +1235,7 @@ export default function App() {
                   </button>
                 </div>
 
-                <div className="text-center mt-4">
+                <div className="text-center mt-6">
                   <p className="text-text2 text-sm">
                     {i18n.language === 'bn' ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে?' : "Already have an account?"}{' '}
                     <button 
@@ -1275,8 +1276,8 @@ export default function App() {
         <div className="min-h-screen bg-bg text-text pb-20">
           <nav className="landing-nav relative z-50">
             <div className="container nav-inner flex justify-center">
-              <a href="#" onClick={(e) => { e.preventDefault(); navigateTo('/', 'landing'); }} className="flex items-center">
-                <Logo size="sm" />
+              <a href="/privacy-policy" onClick={(e) => { e.preventDefault(); navigateTo('/', 'landing'); }} className="flex items-center">
+                <Logo size="sm" theme={theme} />
               </a>
             </div>
           </nav>
@@ -1412,8 +1413,8 @@ export default function App() {
         <div className="min-h-screen bg-bg text-text pb-20">
           <nav className="landing-nav relative z-50">
             <div className="container nav-inner flex justify-center">
-              <a href="#" onClick={(e) => { e.preventDefault(); navigateTo('/', 'landing'); }} className="flex items-center">
-                <Logo size="sm" />
+              <a href="/terms-of-service" onClick={(e) => { e.preventDefault(); navigateTo('/', 'landing'); }} className="flex items-center">
+                <Logo size="sm" theme={theme} />
               </a>
             </div>
           </nav>
@@ -1548,8 +1549,8 @@ export default function App() {
       <>
         <nav className="landing-nav">
   
-        <div className="container nav-inner">
-          <div className="flex items-center gap-4">
+        <div className="container nav-inner grid grid-cols-3 items-center">
+          <div className="flex justify-start">
             <div className="relative">
               <input 
                 type="checkbox" 
@@ -1588,23 +1589,19 @@ export default function App() {
                         <div className="w-1.5 h-1.5 rounded-full bg-border group-hover:bg-orange transition-colors"></div>
                         {i18n.language === 'bn' ? 'সাধারণ প্রশ্ন' : 'FAQ'}
                       </button>
-                    </div>
-                    
-                    <div className="px-3 mt-2 border-t border-border pt-2">
-                      <div className="bg-bg2 p-1 rounded-xl flex items-center gap-1">
-                        <button 
-                          onClick={() => i18n.changeLanguage('en')}
-                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${i18n.language === 'en' ? 'bg-orange text-white shadow-lg shadow-orange/20' : 'text-text3 hover:text-text'}`}
-                        >
-                          English
-                        </button>
-                        <button 
-                          onClick={() => i18n.changeLanguage('bn')}
-                          className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all ${i18n.language === 'bn' ? 'bg-orange text-white shadow-lg shadow-orange/20' : 'text-text3 hover:text-text'}`}
-                        >
-                          বাংলা
+                      <div className="pt-2 mt-2 border-t border-border/50">
+                        <button onClick={() => { setIsMenuOpen(false); handleAuthClick('login'); }} className="w-full text-left px-4 py-2.5 text-sm font-bold text-orange hover:bg-orange/5 transition-all flex items-center gap-3 group">
+                          <User className="w-4 h-4" />
+                          {i18n.language === 'bn' ? 'লগইন' : 'Login'}
                         </button>
                       </div>
+                    </div>
+                    
+                    <div className="px-3 mt-2 border-t border-border pt-3 pb-1">
+                      <button onClick={() => { setIsMenuOpen(false); handleAuthClick('signup'); }} className="w-full bg-orange text-white py-2.5 rounded-xl font-bold text-sm hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 shadow-lg shadow-orange/20">
+                        {i18n.language === 'bn' ? 'শুরু করুন' : 'Get Started'}
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
                   </motion.div>
                 )}
@@ -1612,16 +1609,21 @@ export default function App() {
             </div>
           </div>
 
-          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => window.location.reload(), 800); }} className="flex items-center md:hidden">
-            <Logo size="xs" showText={false} />
-          </a>
-          <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => window.location.reload(), 800); }} className="hidden md:flex items-center">
-            <Logo size="xs" />
-          </a>
+          <div className="flex justify-center">
+            <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => window.location.reload(), 800); }} className="flex items-center md:hidden">
+              <Logo size="md" showText={false} theme={theme} />
+            </a>
+            <a href="#" onClick={(e) => { e.preventDefault(); window.scrollTo({top: 0, behavior: 'smooth'}); setTimeout(() => window.location.reload(), 800); }} className="hidden md:flex items-center">
+              <Logo size="lg" theme={theme} />
+            </a>
+          </div>
 
-          <div className="flex items-center gap-4">
-            <button onClick={handleAuthClick} className="btn-primary nav-btn">
-              {i18n.language === 'bn' ? '৩০ দিন ফ্রি ট্রায়াল নিন' : 'Get 30 days free'}
+          <div className="flex justify-end items-center gap-2">
+            <button onClick={() => handleAuthClick('login')} className="hidden md:flex text-sm font-bold hover:text-orange transition-colors">
+              {i18n.language === 'bn' ? 'লগইন' : 'Login'}
+            </button>
+            <button onClick={() => handleAuthClick('signup')} className="hidden md:flex bg-orange text-white px-4 py-2 rounded-xl text-sm font-bold hover:scale-105 transition-all shadow-md shadow-orange/20">
+              {i18n.language === 'bn' ? 'শুরু করুন' : 'Get Started'}
             </button>
           </div>
         </div>
@@ -1671,7 +1673,7 @@ export default function App() {
             )}
           </p>
           <div className="hero-actions">
-            <button onClick={handleAuthClick} className="btn-primary large">
+            <button onClick={() => handleAuthClick('signup')} className="btn-primary large">
               {i18n.language === 'bn' ? 'আপনার Ads ঠিক করতে এখনই শুরু করুন' : 'Start fixing your Ads now'}
               <ArrowRight className="w-5 h-5" />
             </button>
@@ -2112,7 +2114,7 @@ export default function App() {
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? 'সম্পূর্ণ বাংলা Interface' : 'Full Bangla Interface'}</li>
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? '১টি Facebook Page · মাসে ১০০ অর্ডার' : '1 Facebook Page · 100 Orders/Month'}</li>
               </ul>
-              <button onClick={handleAuthClick} className="btn-primary w-full">
+              <button onClick={() => handleAuthClick('signup')} className="btn-primary w-full">
                 {i18n.language === 'bn' ? 'শুরু করুন →' : 'Get 30 days Free →'}
               </button>
             </div>
@@ -2190,7 +2192,7 @@ export default function App() {
           <h2>{i18n.language === 'bn' ? 'আপনার Ads-কে অন্ধের মতো চালানো বন্ধ করুন' : 'Stop running your Ads blindly'}</h2>
           <p>{i18n.language === 'bn' ? 'Trackoora-এর মাধ্যমে Meta-কে জানান আপনার আসল কাস্টমার কারা। আজই শুরু করুন আপনার ৩০ দিনের ফ্রি ট্রায়াল।' : 'Tell Meta who your real customers are with Trackoora. Start your 30-day free trial today.'}</p>
           
-          <button onClick={handleAuthClick} className="btn-primary large">
+          <button onClick={() => handleAuthClick('signup')} className="btn-primary large">
             {i18n.language === 'bn' ? 'ফ্রি ট্রায়াল শুরু করুন' : 'Start Free Trial'}
             <ArrowRight className="w-5 h-5" />
           </button>
@@ -2201,7 +2203,9 @@ export default function App() {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-brand">
-              <Logo size="md" className="mb-4" />
+              <div className="flex items-center mb-4">
+                <Logo size="lg" theme={theme} showText={false} />
+              </div>
               <p>{i18n.language === 'bn' ? 'বাংলাদেশের F-Commerce সেলারদের জন্য তৈরি প্রথম Ads Attribution ও Tracking প্ল্যাটফর্ম।' : 'The first Ads Attribution & Tracking platform built for F-Commerce sellers in Bangladesh.'}</p>
             </div>
             <div className="footer-links">
