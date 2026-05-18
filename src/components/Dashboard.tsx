@@ -155,6 +155,34 @@ export default function Dashboard({
     setOrderStatusFilter("All");
     setOrderPaymentFilter("All");
   }, [activeTab]);
+  const [isMetaConnected, setIsMetaConnected] = useState(!integrationSkipped);
+  const [showAttentionBox, setShowAttentionBox] = useState(integrationSkipped);
+  const [hasSeenAttentionBox, setHasSeenAttentionBox] = useState(false);
+
+  // Sync data and meta connection state when integrationSkipped prop changes
+  useEffect(() => {
+    setIsMetaConnected(!integrationSkipped);
+    if (integrationSkipped) {
+      setOrders([]);
+      setConversations([]);
+    } else {
+      setOrders(MOCK_ORDERS);
+      setConversations(MOCK_CONVERSATIONS);
+    }
+  }, [integrationSkipped]);
+
+  useEffect(() => {
+    if (!isMetaConnected && ['conversations', 'orders', 'reports'].includes(activeTab)) {
+      setShowAttentionBox(true);
+    }
+  }, [activeTab, isMetaConnected]);
+
+  const handleConnectClick = () => {
+    setActiveTab("settings");
+    setSettingsTab("connected");
+    setShowAttentionBox(false);
+  };
+
   const [loading, setLoading] = useState(true);
   const [showOrderPanel, setShowOrderPanel] = useState<any>(null);
   const [productName, setProductName] = useState("");
@@ -425,9 +453,10 @@ export default function Dashboard({
 
   const [isSyncingMeta, setIsSyncingMeta] = useState(false);
 
-  const [orders, setOrders] = useState(MOCK_ORDERS);
+  const [orders, setOrders] = useState(!integrationSkipped ? MOCK_ORDERS : []);
 
   const filteredAds = useMemo(() => {
+    if (!isMetaConnected) return [];
     // True Attribution Mapping
     const realAdData = MOCK_ADS.map(ad => {
       // Find orders matching this campaign based on CAPI tracking
@@ -525,7 +554,7 @@ export default function Dashboard({
     },
   ]);
 
-  const [conversations, setConversations] = useState(MOCK_CONVERSATIONS);
+  const [conversations, setConversations] = useState(!integrationSkipped ? MOCK_CONVERSATIONS : []);
 
   useEffect(() => {
     if (showFollowUpPanel) {
@@ -635,6 +664,7 @@ export default function Dashboard({
   }, [conversations]);
 
   const filteredConversations = useMemo(() => {
+    if (!isMetaConnected) return [];
     let filtered = conversations.filter((c) => {
       const searchLower = convSearch.toLowerCase();
       const matchesSearch =
@@ -685,6 +715,7 @@ export default function Dashboard({
   }, [conversations, convSearch, convFilter, filterRange, customRange]);
 
   const filteredOrders = useMemo(() => {
+    if (!isMetaConnected) return [];
     const filtered = orders.filter((order) => {
       const searchLower = orderSearch.toLowerCase();
       const matchesSearch =
@@ -755,7 +786,7 @@ export default function Dashboard({
   }, [orders]);
 
   const adStats = useMemo(() => {
-    const totalSpend = MOCK_ADS.reduce((acc, ad) => acc + ad.spend, 0);
+    const totalSpend = isMetaConnected ? MOCK_ADS.reduce((acc, ad) => acc + ad.spend, 0) : 0;
     const totalLeads = conversations.length;
     // Map purchases only from CAPI identified orders
     const adDrivenOrders = orders.filter(o => 
@@ -2360,7 +2391,7 @@ export default function Dashboard({
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-52 bg-card border-r border-border flex flex-col transform transition-transform duration-300 ease-in-out md:translate-x-0 ${isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"}`}
       >
-        <div className="p-4 flex items-center justify-between shrink-0">
+        <div className="pt-5 pb-3 px-[22px] flex items-center justify-between shrink-0">
           <Logo size="sm" showText={true} theme={theme} />
           <button
             onClick={() => setIsMobileMenuOpen(false)}
@@ -2804,35 +2835,76 @@ export default function Dashboard({
           )}
         </AnimatePresence>
 
+        {/* Facebook Connect Attention Box Popup */}
+        <AnimatePresence>
+          {showAttentionBox && (
+            <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => {
+                  setShowAttentionBox(false);
+                  setHasSeenAttentionBox(true);
+                }}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                className="relative w-full max-w-sm bg-card border border-border2 rounded-[32px] p-8 text-center shadow-2xl overflow-hidden"
+              >
+                <div className="absolute top-0 left-0 w-full h-1.5 bg-orange"></div>
+                <button 
+                  onClick={() => {
+                    setShowAttentionBox(false);
+                    setHasSeenAttentionBox(true);
+                  }}
+                  className="absolute top-4 right-4 p-2 hover:bg-bg3 rounded-full transition-colors text-text3"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                
+                <div className="w-20 h-20 bg-orange/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-orange/20">
+                  <Facebook className="text-orange w-10 h-10" />
+                </div>
+                
+                <h2 className="text-2xl font-black mb-3 tracking-tight">
+                  {t("Facebook Connect", "ফেসবুক কানেক্ট")}
+                </h2>
+                <p className="text-text2 text-sm leading-relaxed mb-8 font-medium">
+                  {t(
+                    "Your Facebook connection is pending. Connect your account to unlock all features and start tracking accurately.",
+                    "আপনার ফেসবুক কানেকশনটি পেন্ডিং আছে। সব ফিচার আনলক করতে এবং সঠিকভাবে ট্র্যাকিং শুরু করতে আপনার অ্যাকাউন্টটি কানেক্ট করুন।"
+                  )}
+                </p>
+                
+                <div className="flex flex-col gap-3">
+                  <button 
+                    onClick={handleConnectClick} 
+                    className="btn-primary w-full py-3.5 rounded-full font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange/20"
+                  >
+                    {t("Connect Now", "এখনই কানেক্ট করুন")}
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setShowAttentionBox(false);
+                      setHasSeenAttentionBox(true);
+                    }}
+                    className="text-text3 hover:text-text font-bold text-xs py-2 uppercase tracking-widest transition-colors"
+                  >
+                    {t("Maybe Later", "পরে করব")}
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
         {/* Dashboard Content */}
         <div className={`flex-1 p-4 md:p-8 space-y-6 md:space-y-8 relative overflow-y-auto`}>
-          {integrationSkipped && ['messages', 'orders', 'ads'].includes(activeTab) ? (
-             <div className="flex flex-col items-center justify-center p-8 min-h-[60vh]">
-               <motion.div 
-                 initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                 className="w-full max-w-sm bg-card border border-border2 rounded-3xl p-8 text-center relative shadow-xl overflow-hidden"
-               >
-                 <div className="absolute top-0 left-0 w-full h-1.5 bg-orange"></div>
-                 <div className="space-y-3 mb-8">
-                   <h2 className="text-xl font-black tracking-tight">
-                     {language === 'bn' ? 'ফেসবুক কানেক্ট করুন' : 'Connect Facebook'}
-                   </h2>
-                   <p className="text-text3 text-sm leading-relaxed px-2 font-medium">
-                     {language === 'bn' 
-                       ? `আপনার ${activeTab === 'messages' ? 'ম্যাসেজ' : activeTab === 'orders' ? 'অর্ডার' : 'অ্যাড'} ট্র্যাকিং শুরু করতে ফেসবুক পেজটি কানেক্ট করা প্রয়োজন।` 
-                       : `Connect your Facebook page to access ${activeTab} tracking features.`}
-                   </p>
-                 </div>
-                 <button 
-                   onClick={() => { onStartConnectFb && onStartConnectFb(); }} 
-                   className="btn-primary w-full py-3.5 rounded-full font-bold text-base flex items-center justify-center gap-2 shadow-lg shadow-orange/20"
-                 >
-                   {language === 'bn' ? 'কানেক্ট করুন' : 'Connect'}
-                 </button>
-               </motion.div>
-             </div>
-          ) : (
             <>
               {activeTab === "overview" && (
                 <div className="space-y-8">
@@ -2858,30 +2930,33 @@ export default function Dashboard({
                     setIsOpen={setOverviewFilterOpen}
                     align="right"
                   />
-                  {settings?.meta_connected !== false ? (
+                  {isMetaConnected ? (
                     <button className="flex items-center justify-center gap-2 bg-green-500/10 border border-green-500/20 text-green-500 px-3 py-2 rounded-lg font-bold text-xs flex-1 md:flex-none cursor-default">
                       <Facebook className="w-3.5 h-3.5" />
                       {t("Meta Connected", "মেটা কানেক্টেড")}
                     </button>
                   ) : (
                     <button
-                      onClick={() => setActiveTab("settings")}
-                      className="flex items-center justify-center gap-2 bg-red/10 border border-red/20 text-red px-3 py-2 rounded-lg font-bold text-xs hover:bg-red/20 transition-all flex-1 md:flex-none"
+                      onClick={() => {
+                        setActiveTab("settings");
+                        setSettingsTab("connected");
+                      }}
+                      className="flex items-center justify-center gap-2 bg-red-500/10 border border-red-500/20 text-red-500 px-3 py-2 rounded-lg font-bold text-xs hover:bg-red-500/20 transition-all flex-1 md:flex-none animate-pulse"
                     >
                       <AlertCircle className="w-3.5 h-3.5" />
-                      {t("Connect Meta", "Meta কানেক্ট করুন")}
+                      {t("Meta Not Connect", "Meta কানেক্ট নেই")}
                     </button>
                   )}
                 </div>
               </div>
 
               {/* Meta Integration Status Banner */}
-              <div className="bg-bg3 border border-border rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6">
+              <div className={`${isMetaConnected ? 'bg-bg3' : 'bg-red-500/5'} border ${isMetaConnected ? 'border-border' : 'border-red-500/20'} rounded-xl p-4 md:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 md:gap-6 transition-colors`}>
                 <div className="flex items-start md:items-center gap-3">
-                  <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 bg-green-500/10 rounded-full flex items-center justify-center relative">
-                    <Globe className="w-5 h-5 md:w-6 md:h-6 text-green-500" />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 md:w-4 md:h-4 bg-green-500 rounded-full border-2 border-bg3 flex items-center justify-center">
-                      <Check className="w-1.5 h-1.5 md:w-2 md:h-2 text-white" />
+                  <div className={`w-10 h-10 md:w-12 md:h-12 shrink-0 ${isMetaConnected ? 'bg-green-500/10' : 'bg-red-500/10'} rounded-full flex items-center justify-center relative transition-colors`}>
+                    <Globe className={`w-5 h-5 md:w-6 md:h-6 ${isMetaConnected ? 'text-green-500' : 'text-red-500'}`} />
+                    <div className={`absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 md:w-4 md:h-4 ${isMetaConnected ? 'bg-green-500' : 'bg-red-500'} rounded-full border-2 border-bg3 flex items-center justify-center`}>
+                      {isMetaConnected ? <Check className="w-1.5 h-1.5 md:w-2 md:h-2 text-white" /> : <X className="w-1.5 h-1.5 md:w-2 md:h-2 text-white" />}
                     </div>
                   </div>
                   <div>
@@ -2890,33 +2965,40 @@ export default function Dashboard({
                         "Meta Integration Status",
                         "মেটা ইন্টিগ্রেশন স্ট্যাটাস",
                       )}
-                      <span className="bg-green-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
-                        {t("Active", "অ্যাক্টিভ")}
+                      <span className={`${isMetaConnected ? 'bg-green-500' : 'bg-red-500'} text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase`}>
+                        {isMetaConnected ? t("Active", "অ্যাক্টিভ") : t("Deactive", "ডি-অ্যাক্টিভ")}
                       </span>
                     </h3>
-                    <p className="text-[10px] md:text-xs text-text3 mt-0.5">
-                      {t(
-                        "Your Facebook Page and Ads Account are perfectly synced.",
-                        "আপনার ফেসবুক পেজ এবং অ্যাড অ্যাকাউন্ট সঠিকভাবে সিঙ্ক করা আছে।",
+                    <p className="text-[10px] md:text-xs text-text3 mt-0.5 font-medium">
+                      {isMetaConnected ? (
+                        t(
+                          "Your Facebook Page and Ads Account are perfectly synced.",
+                          "আপনার ফেসবুক পেজ এবং অ্যাড অ্যাকাউন্ট সঠিকভাবে সিঙ্ক করা আছে।",
+                        )
+                      ) : (
+                        t(
+                          "Meta CAPI is not firing events. Connect Meta to start tracking.",
+                          "মেটা সিএপিআই ইভেন্ট ফায়ার করছে না। ট্র্যাকিং শুরু করতে মেটা কানেক্ট করুন।",
+                        )
                       )}
                     </p>
                   </div>
                 </div>
                 <div className="flex gap-2 w-full md:w-auto">
-                  <div className="flex-1 md:flex-none bg-card border border-border px-3 py-1.5 rounded-lg text-center">
+                  <div className={`flex-1 md:flex-none bg-card border ${isMetaConnected ? 'border-border' : 'border-red-500/10'} px-3 py-1.5 rounded-lg text-center transition-colors`}>
                     <p className="text-[9px] font-bold text-text3 uppercase tracking-widest">
                       {t("Events Sent", "ইভেন্ট পাঠানো হয়েছে")}
                     </p>
-                    <p className="text-sm md:text-base font-black text-cyan">
-                      {toBanglaNumber("1,284")}
+                    <p className={`text-sm md:text-base font-black ${isMetaConnected ? 'text-cyan' : 'text-text3'}`}>
+                      {isMetaConnected ? toBanglaNumber("1,284") : toBanglaNumber("0")}
                     </p>
                   </div>
-                  <div className="flex-1 md:flex-none bg-card border border-border px-3 py-1.5 rounded-lg text-center">
+                  <div className={`flex-1 md:flex-none bg-card border ${isMetaConnected ? 'border-border' : 'border-red-500/10'} px-3 py-1.5 rounded-lg text-center transition-colors`}>
                     <p className="text-[9px] font-bold text-text3 uppercase tracking-widest">
                       {t("Match Rate", "ম্যাচ রেট")}
                     </p>
-                    <p className="text-sm md:text-base font-black text-green-500">
-                      {toBanglaNumber("94")}%
+                    <p className={`text-sm md:text-base font-black ${isMetaConnected ? 'text-green-500' : 'text-text3'}`}>
+                      {isMetaConnected ? toBanglaNumber("94") + "%" : "--"}
                     </p>
                   </div>
                 </div>
@@ -2926,29 +3008,29 @@ export default function Dashboard({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                   label={t("Total Sales", "মোট বিক্রি")}
-                  value={`৳${toBanglaNumber(orderStats.grossNum.toLocaleString())}`}
-                  change={`+${toBanglaNumber("12.5")}%`}
+                  value={isMetaConnected ? `৳${toBanglaNumber(orderStats.grossNum.toLocaleString())}` : `৳${toBanglaNumber(0)}`}
+                  change={isMetaConnected ? `+${toBanglaNumber("12.5")}%` : null}
                   trend="up"
                   icon={<TakaIcon className="w-6 h-6 text-orange" />}
                 />
                 <StatCard
                   label={t("Confirmed Orders", "কনফার্ম অর্ডার")}
-                  value={toBanglaNumber(orderStats.total)}
-                  change={`+${toBanglaNumber("8.2")}%`}
+                  value={isMetaConnected ? toBanglaNumber(orderStats.total) : toBanglaNumber(0)}
+                  change={isMetaConnected ? `+${toBanglaNumber("8.2")}%` : null}
                   trend="up"
                   icon={<Package className="w-6 h-6 text-cyan" />}
                 />
                 <StatCard
                   label={t("Total Leads", "মোট লিড")}
-                  value={toBanglaNumber(adStats.leads)}
-                  change={`+${toBanglaNumber("24.1")}%`}
+                  value={isMetaConnected ? toBanglaNumber(adStats.leads) : toBanglaNumber(0)}
+                  change={isMetaConnected ? `+${toBanglaNumber("24.1")}%` : null}
                   trend="up"
                   icon={<MessageSquare className="w-6 h-6 text-purple-500" />}
                 />
                 <StatCard
                   label={t("Conversion Rate", "কনভার্সন রেট")}
-                  value={`${toBanglaNumber(conversations.length > 0 ? ((orders.length / conversations.length) * 100).toFixed(1) : 0)}%`}
-                  change={`-${toBanglaNumber("2.4")}%`}
+                  value={isMetaConnected ? `${toBanglaNumber(conversations.length > 0 ? ((orders.length / conversations.length) * 100).toFixed(1) : 0)}%` : toBanglaNumber(0) + "%"}
+                  change={isMetaConnected ? `-${toBanglaNumber("2.4")}%` : null}
                   trend="down"
                   icon={<TrendingUp className="w-6 h-6 text-green-500" />}
                 />
@@ -2978,7 +3060,7 @@ export default function Dashboard({
                   </div>
                   <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
+                      <AreaChart data={isMetaConnected ? chartData : []}>
                         <defs>
                           <linearGradient
                             id="colorSales"
@@ -3747,10 +3829,10 @@ export default function Dashboard({
                     </p>
                   </div>
                   <p className="text-xl font-black text-text">
-                    {toBanglaNumber(482)}
+                    {isMetaConnected ? toBanglaNumber(482) : toBanglaNumber(0)}
                   </p>
                   <p className="text-[9px] text-green-500 font-bold mt-1">
-                    ↑ {toBanglaNumber(12)}% {t("this month", "এই মাসে")}
+                    {isMetaConnected ? `↑ ${toBanglaNumber(12)}% ` : ""}{t("this month", "এই মাসে")}
                   </p>
                 </div>
                 <div className="bg-card border border-border p-3.5 rounded-xl shadow-sm">
@@ -3761,7 +3843,7 @@ export default function Dashboard({
                     </p>
                   </div>
                   <p className="text-xl font-black text-text">
-                    {toBanglaNumber(24.5)}%
+                    {isMetaConnected ? toBanglaNumber(24.5) : toBanglaNumber(0)}%
                   </p>
                   <p className="text-[9px] text-text3 font-bold mt-1">
                     {t("last 30 days", "গত ৩০ দিনে")}
@@ -3775,7 +3857,7 @@ export default function Dashboard({
                     </p>
                   </div>
                   <p className="text-xl font-black text-text">
-                    {toBanglaNumber(89)}%
+                    {isMetaConnected ? toBanglaNumber(89) : toBanglaNumber(0)}%
                   </p>
                   <p className="text-[9px] text-text3 font-bold mt-1">
                     {t("orders delivered", "অর্ডার ডেলিভার্ড")}
@@ -4333,7 +4415,7 @@ export default function Dashboard({
                   </div>
                   <div className="h-[250px]">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={data}>
+                      <AreaChart data={isMetaConnected ? data : []}>
                         <defs>
                           <linearGradient
                             id="colorSpend"
@@ -5885,14 +5967,16 @@ export default function Dashboard({
                       </h3>
                     </div>
                     <div className="p-5 space-y-5">
-                      {integrationSkipped ? (
+                      {!isMetaConnected ? (
                          <div className="text-center py-6 flex flex-col items-center">
                            <div className="w-16 h-16 bg-[#1877F2]/10 rounded-full flex items-center justify-center mb-4">
                              <Facebook className="w-8 h-8 text-[#1877F2]" />
                            </div>
                            <p className="text-sm font-bold mb-2">Facebook Not Connected</p>
                            <p className="text-xs text-text3 mb-4">Connect your Facebook Page to track performance.</p>
-                           <button onClick={() => { onStartConnectFb && onStartConnectFb(); }} className="btn-primary bg-[#1877F2] shadow-[#1877F2]/20 !px-6 !py-2.5">
+                           <button onClick={() => { 
+                             onStartConnectFb && onStartConnectFb();
+                           }} className="btn-primary bg-[#1877F2] shadow-[#1877F2]/20 !px-6 !py-2.5">
                              <Facebook className="w-4 h-4" fill="currentColor" />
                              {t("Connect Facebook", "ফেসবুক কানেক্ট করুন")}
                            </button>
@@ -7907,7 +7991,7 @@ export default function Dashboard({
                             </h4>
                             <div className="h-48">
                               <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={data}>
+                                <LineChart data={isMetaConnected ? data : []}>
                                   <CartesianGrid
                                     strokeDasharray="3 3"
                                     stroke="#e1e1e1"
@@ -9283,9 +9367,7 @@ export default function Dashboard({
               </div>
             )}
           </AnimatePresence>
-            </>
-          )}
-          
+          </>
         </div>
       </main>
     </div>

@@ -221,10 +221,8 @@ export default function App() {
   };
 
   const handleAuthClick = (mode: 'login' | 'signup' = 'login') => {
-    setAuthMode(mode);
+    resetAuthForm(mode);
     setView('auth');
-    setAuthStep('form');
-    setError(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -574,13 +572,20 @@ export default function App() {
                   {i18n.language === 'bn' ? 'এক মূহুর্তের ছোট একটি সার্ভে' : 'Just a quick 10-second survey'}
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-8">
-                  {['Facebook', 'YouTube', 'TikTok', 'Friend', 'Ads', 'Other'].map((src) => (
+                  {[
+                    { en: 'Facebook', bn: 'ফেসবুক' },
+                    { en: 'YouTube', bn: 'ইউটিউব' },
+                    { en: 'TikTok', bn: 'টিকটক' },
+                    { en: 'Friend', bn: 'বন্ধুর কাছ থেকে' },
+                    { en: 'Ads', bn: 'অ্যাড থেকে' },
+                    { en: 'Other', bn: 'অন্যান্য' }
+                  ].map((src) => (
                     <button
-                      key={src}
-                      onClick={() => { setSurveySource(src); setOnboardingStep('survey_business'); }}
+                      key={src.en}
+                      onClick={() => { setSurveySource(src.en); setOnboardingStep('survey_business'); }}
                       className="bg-card border-2 border-border rounded-2xl py-4 font-bold text-xs hover:border-orange hover:bg-orange/5 transition-all shadow-sm"
                     >
-                      {src}
+                      {i18n.language === 'bn' ? src.bn : src.en}
                     </button>
                   ))}
                 </div>
@@ -596,13 +601,20 @@ export default function App() {
                   {i18n.language === 'bn' ? 'আপনার পন্যের ধরণ কি?' : 'What do you mainly sell?'}
                 </p>
                 <div className="grid grid-cols-2 gap-3 mb-8">
-                  {['Apparel', 'Gadget', 'Food', 'Beauty', 'Home', 'Service'].map((biz) => (
+                  {[
+                    { en: 'Apparel', bn: 'পোশাক' },
+                    { en: 'Gadget', bn: 'গ্যাজেট' },
+                    { en: 'Food', bn: 'খাবার' },
+                    { en: 'Beauty', bn: 'বিউটি' },
+                    { en: 'Home', bn: 'বাড়ি' },
+                    { en: 'Service', bn: 'সার্ভিস' }
+                  ].map((biz) => (
                     <button
-                      key={biz}
-                      onClick={() => { setSurveyBusiness(biz); setOnboardingStep('survey_thanks'); }}
+                      key={biz.en}
+                      onClick={() => { setSurveyBusiness(biz.en); setOnboardingStep('survey_thanks'); }}
                       className="bg-card border-2 border-border rounded-2xl py-4 font-bold text-xs hover:border-orange hover:bg-orange/5 transition-all shadow-sm"
                     >
-                      {biz}
+                      {i18n.language === 'bn' ? biz.bn : biz.en}
                     </button>
                   ))}
                 </div>
@@ -852,13 +864,13 @@ export default function App() {
                           setOnboardingStep('setup_fb_page');
                         }
                       }}
-                      className="bg-[#1877F2] text-white py-3 px-4 rounded-lg font-bold hover:bg-[#166fe5] transition-colors"
+                      className="btn-primary w-full py-3 bg-[#1877F2] hover:bg-[#166fe5] shadow-[#1877F2]/20"
                     >
                       Continue as Demo User
                     </button>
                     <button 
                       onClick={() => setShowFbModal(false)}
-                      className="text-gray-500 font-semibold hover:text-gray-700 py-2"
+                      className="text-text3 font-bold hover:text-text py-2 text-xs uppercase tracking-widest transition-colors"
                     >
                       Cancel
                     </button>
@@ -909,27 +921,27 @@ export default function App() {
                       <li className="flex gap-2">✓ Access Facebook Ads data</li>
                     </ul>
                     
-                    <div className="flex flex-col gap-3">
-                      <button 
-                        onClick={() => {
-                          setShowFbModal(false);
-                          if (view === 'dashboard') {
-                            setIntegrationSkipped(false);
-                          } else {
-                            setOnboardingStep('setup_fb_page');
-                          }
-                        }}
-                        className="bg-[#1877F2] text-white py-3 px-4 rounded-lg font-bold hover:bg-[#166fe5] transition-colors"
-                      >
-                        Continue as Demo User
-                      </button>
-                      <button 
-                        onClick={() => setShowFbModal(false)}
-                        className="text-gray-500 font-semibold hover:text-gray-700 py-2"
-                      >
-                        Cancel
-                      </button>
-                    </div>
+                  <div className="flex flex-col gap-3">
+                    <button 
+                      onClick={() => {
+                        setShowFbModal(false);
+                        if (view === 'dashboard') {
+                          setIntegrationSkipped(false);
+                        } else {
+                          setOnboardingStep('setup_fb_page');
+                        }
+                      }}
+                      className="btn-primary w-full py-3 bg-[#1877F2] hover:bg-[#166fe5] shadow-[#1877F2]/20"
+                    >
+                      Continue as Demo User
+                    </button>
+                    <button 
+                      onClick={() => setShowFbModal(false)}
+                      className="text-text3 font-bold hover:text-text py-2 text-xs uppercase tracking-widest transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                   </div>
                 </motion.div>
               </div>
@@ -1046,7 +1058,7 @@ export default function App() {
                 <button 
                   type="submit" 
                   disabled={loading || otp.length < 6}
-                  className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 shadow-lg"
+                  className="btn-primary w-full py-3 text-base font-bold flex items-center justify-center gap-2 shadow-md"
                 >
                   {loading ? (
                     <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1104,13 +1116,13 @@ export default function App() {
 
                 <div>
                   <div className="relative">
-                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
                     <input 
                       type="email" 
                       placeholder={i18n.language === 'bn' ? 'ইমেল (example@mail.com)' : 'Email Address'}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="auth-input pl-12 py-3 text-sm"
+                      className="auth-input !pl-[52px] py-3 text-sm"
                       required
                     />
                   </div>
@@ -1118,13 +1130,13 @@ export default function App() {
 
                 <div className="space-y-1">
                   <div className="relative">
-                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
                     <input 
                       type={showPassword ? "text" : "password"} 
                       placeholder={i18n.language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="auth-input pl-12 pr-12 py-3 text-sm"
+                      className="auth-input !pl-[52px] !pr-14 py-3 text-sm"
                       required
                     />
                     <button
@@ -1170,7 +1182,12 @@ export default function App() {
                     {i18n.language === 'bn' ? 'একাউন্ট নেই?' : "Don't have an account?"}{' '}
                     <button 
                       type="button"
-                      onClick={() => setAuthMode('signup')}
+                      onClick={() => {
+                        setAuthMode('signup');
+                        setEmail('');
+                        setPassword('');
+                        setError(null);
+                      }}
                       className="text-orange font-black hover:underline"
                     >
                       {i18n.language === 'bn' ? 'ফ্রি সাইনআপ' : 'Signup Free'}
@@ -1224,13 +1241,13 @@ export default function App() {
 
                 <div>
                   <div className="relative">
-                    <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <Mail className="absolute left-6 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
                     <input 
                       type="email" 
                       placeholder={i18n.language === 'bn' ? 'ইমেল (example@mail.com)' : 'Email Address'}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="auth-input pl-12 py-3 text-sm"
+                      className="auth-input !pl-[52px] py-3 text-sm"
                       required
                     />
                   </div>
@@ -1238,13 +1255,13 @@ export default function App() {
 
                 <div>
                   <div className="relative">
-                    <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 text-text3 w-4 h-4" />
                     <input 
                       type={showPassword ? "text" : "password"} 
                       placeholder={i18n.language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="auth-input pl-12 pr-12 py-3 text-sm"
+                      className="auth-input !pl-[52px] !pr-14 py-3 text-sm"
                       required
                     />
                     <button
@@ -1314,7 +1331,7 @@ export default function App() {
                     {i18n.language === 'bn' ? 'ইতিমধ্যেই অ্যাকাউন্ট আছে?' : "Already have an account?"}{' '}
                     <button 
                       type="button"
-                      onClick={() => setAuthMode('login')}
+                      onClick={() => resetAuthForm('login')}
                       className="text-orange font-black hover:underline"
                     >
                       {i18n.language === 'bn' ? 'লগইন করুন' : 'Login'}
@@ -1710,7 +1727,7 @@ export default function App() {
             <button onClick={() => handleAuthClick('login')} className="hidden md:flex text-sm font-bold hover:text-orange transition-colors">
               {i18n.language === 'bn' ? 'লগইন' : 'Login'}
             </button>
-            <button onClick={() => handleAuthClick('signup')} className="hidden md:flex bg-orange text-white px-4 py-2 rounded-full text-sm font-bold hover:scale-105 transition-all shadow-md shadow-orange/20">
+            <button onClick={() => handleAuthClick('signup')} className="hidden md:flex bg-orange text-white px-5 py-2.5 rounded-full text-sm font-bold hover:scale-105 transition-all shadow-md shadow-orange/20">
               {i18n.language === 'bn' ? 'শুরু করুন' : 'Get Started'}
             </button>
           </div>
@@ -1761,7 +1778,7 @@ export default function App() {
             )}
           </p>
           <div className="hero-actions justify-start">
-            <button onClick={() => handleAuthClick('signup')} className="btn-primary large beep-slow">
+            <button onClick={() => handleAuthClick('signup')} className="btn-primary beep-slow !py-3 !px-8 text-base font-bold shadow-md">
               {i18n.language === 'bn' ? 'আপনার Ads ঠিক করতে এখনই শুরু করুন' : 'Start fixing your Ads now'}
               
             </button>
@@ -2210,7 +2227,7 @@ export default function App() {
                 <li><CheckCircle2 className="chk w-4 h-4" /> {i18n.language === 'bn' ? '১টি Facebook Page · মাসে ১০০ অর্ডার' : '1 Facebook Page · 100 Orders/Month'}</li>
               </ul>
 
-              <button onClick={() => handleAuthClick('signup')} className="btn-primary w-full btn-glow py-5 text-lg rounded-full">
+              <button onClick={() => handleAuthClick('signup')} className="btn-primary w-full btn-glow !py-3 text-base font-bold rounded-full shadow-md">
                 {i18n.language === 'bn' ? 'শুরু করুন' : 'Get 30 days Free'}
               </button>
             </div>
@@ -2288,7 +2305,7 @@ export default function App() {
           <h2>{i18n.language === 'bn' ? 'আপনার Ads-কে অন্ধের মতো চালানো বন্ধ করুন' : 'Stop running your Ads blindly'}</h2>
           <p>{i18n.language === 'bn' ? 'Trackoora-এর মাধ্যমে Meta-কে জানান আপনার আসল কাস্টমার কারা। আজই শুরু করুন আপনার ৩০ দিনের ফ্রি ট্রায়াল।' : 'Tell Meta who your real customers are with Trackoora. Start your 30-day free trial today.'}</p>
           
-          <button onClick={() => handleAuthClick('signup')} className="btn-primary large btn-glow">
+          <button onClick={() => handleAuthClick('signup')} className="btn-primary btn-glow !py-3 !px-8 text-base font-bold shadow-md">
             {i18n.language === 'bn' ? 'ফ্রি ট্রায়াল শুরু করুন' : 'Start Free Trial'}
             
           </button>
@@ -2399,7 +2416,7 @@ export default function App() {
 
                           <button 
                             onClick={() => setForgotPasswordStep('otp')}
-                            className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2"
+                            className="btn-primary w-full py-3 text-base font-bold flex items-center justify-center gap-2 shadow-md"
                           >
                             {i18n.language === 'bn' ? 'কোড পাঠান' : 'Send Code'}
                             
@@ -2430,7 +2447,7 @@ export default function App() {
 
                           <button 
                             onClick={() => setForgotPasswordStep('success')}
-                            className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2"
+                            className="btn-primary w-full py-3 text-base font-bold flex items-center justify-center gap-2 shadow-md"
                           >
                             {i18n.language === 'bn' ? 'ভেরিফাই করুন' : 'Verify'}
                             <CheckCircle2 className="w-5 h-5" />
